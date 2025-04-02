@@ -55,9 +55,5 @@ module.exports = {
     preflight: false,
   },
   content: ["./src/**/*.{html,md,js,jsx,ts,tsx}"],
-  plugins: [
-    require("@tailwindcss/forms"),
-    require("@tailwindcss/typography"),
-    require("tailwindcss-animate"),
-  ],
+  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
 };
