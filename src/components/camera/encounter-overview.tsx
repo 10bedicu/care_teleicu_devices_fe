@@ -12,6 +12,7 @@ import { query, mutate } from "@/lib/request";
 import { Encounter } from "@/lib/types/encounter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import PluginComponent from "@/components/common/plugin-component";
 
 interface Props {
   encounter: Encounter;
@@ -72,54 +73,56 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <Tabs value={activeCamera || undefined} onValueChange={setActiveCamera}>
-        <div className="flex items-center justify-between mb-4">
-          <TabsList>
-            {cameras.results.map((camera) => (
-              <TabsTrigger key={camera.id} value={camera.id}>
-                {camera.user_friendly_name || camera.registered_name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+    <PluginComponent>
+      <div className="flex flex-col gap-4">
+        <Tabs value={activeCamera || undefined} onValueChange={setActiveCamera}>
+          <div className="flex items-center justify-between mb-4">
+            <TabsList>
+              {cameras.results.map((camera) => (
+                <TabsTrigger key={camera.id} value={camera.id}>
+                  {camera.user_friendly_name || camera.registered_name}
+                </TabsTrigger>
+              ))}
+            </TabsList>
 
-          {/* Position Preset Selector */}
-          <div className="w-64 ml-4">
-            <Autocomplete
-              disabled={isMoving}
-              options={positionPresets?.results || []}
-              value={selectedPreset}
-              onSelect={setSelectedPreset}
-              placeholder="Select position preset..."
-              searchPlaceholder="Search presets..."
-              noResultsText="No position presets found"
-              renderOption={({ name }) => (
-                <span className="font-medium">{name}</span>
-              )}
-              renderValue={(preset) =>
-                preset?.name || "Select position preset..."
-              }
-              isLoading={!positionPresets}
-              className="w-full"
-            />
+            {/* Position Preset Selector */}
+            <div className="w-64 ml-4">
+              <Autocomplete
+                disabled={isMoving}
+                options={positionPresets?.results || []}
+                value={selectedPreset}
+                onSelect={setSelectedPreset}
+                placeholder="Select position preset..."
+                searchPlaceholder="Search presets..."
+                noResultsText="No position presets found"
+                renderOption={({ name }) => (
+                  <span className="font-medium">{name}</span>
+                )}
+                renderValue={(preset) =>
+                  preset?.name || "Select position preset..."
+                }
+                isLoading={!positionPresets}
+                className="w-full"
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Camera Feed Content */}
-        {cameras.results.map((camera) => (
-          <TabsContent key={camera.id} value={camera.id}>
-            <CameraFeedProvider device={camera}>
-              <div className="relative aspect-video bg-gray-950 group rounded-xl overflow-hidden shadow-lg">
-                <CameraFeedPlayer />
-                <CameraFeedControls
-                  inlineView
-                  onRelativeMoved={() => setSelectedPreset(undefined)}
-                />
-              </div>
-            </CameraFeedProvider>
-          </TabsContent>
-        ))}
-      </Tabs>
-    </div>
+          {/* Camera Feed Content */}
+          {cameras.results.map((camera) => (
+            <TabsContent key={camera.id} value={camera.id}>
+              <CameraFeedProvider device={camera}>
+                <div className="relative aspect-video bg-gray-950 group rounded-xl overflow-hidden shadow-lg">
+                  <CameraFeedPlayer />
+                  <CameraFeedControls
+                    inlineView
+                    onRelativeMoved={() => setSelectedPreset(undefined)}
+                  />
+                </div>
+              </CameraFeedProvider>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
+    </PluginComponent>
   );
 };

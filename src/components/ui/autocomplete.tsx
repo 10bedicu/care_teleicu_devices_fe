@@ -7,7 +7,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
-import { CardListSkeleton } from "@/components/shared/skeleton-loading";
+import { CardListSkeleton } from "@/components/common/skeleton-loading";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
 
@@ -85,7 +85,7 @@ export function Autocomplete<T extends AutocompleteOption>({
         )}
       >
         <div className="pt-1">
-          <div className="flex items-center border-b px-2">
+          <div className="flex items-center border-b border-gray-200 px-2">
             <MagnifyingGlassIcon className="mr-2 h-4 w-4 shrink-0 opacity-50" />
             <Input
               placeholder={searchPlaceholder}

@@ -12,7 +12,8 @@ import { ConfigureFormProps } from "@/lib/types/common";
 import {
   NetworkMetrics,
   PingMetrics,
-} from "@/components/shared/network-metrics";
+} from "@/components/common/network-metrics";
+import PluginComponent from "@/components/common/plugin-component";
 
 interface HealthStatus {
   server: boolean;
@@ -405,44 +406,48 @@ export const GatewayDeviceConfigureForm = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div>
-        <Label className="mb-2">
-          Gateway's Endpoint Address
-          <span className="text-red-500">*</span>
-        </Label>
-        <div className="flex items-center gap-2">
-          <Input
-            autoComplete=""
-            placeholder="Gateway's Endpoint Address without http:// or https://"
-            value={metadata.endpoint_address}
-            onChange={(e) => {
-              onChange({
-                ...metadata,
-                endpoint_address: e.target.value,
-              });
-
-              // Stop continuous ping when host changes
-              if (continuousPing) {
-                setContinuousPing(false);
-              }
-            }}
-            className="flex-1"
-          />
+    <PluginComponent>
+      <div className="space-y-4">
+        <div>
+          <Label className="mb-2">
+            Gateway's Endpoint Address
+            <span className="text-red-500">*</span>
+          </Label>
           <div className="flex items-center gap-2">
-            {renderStatusIcon()}
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={testConnection}
-              disabled={testStatus === "loading" || !metadata.endpoint_address}
-            >
-              Test Connection
-            </Button>
+            <Input
+              autoComplete=""
+              placeholder="Gateway's Endpoint Address without http:// or https://"
+              value={metadata.endpoint_address}
+              onChange={(e) => {
+                onChange({
+                  ...metadata,
+                  endpoint_address: e.target.value,
+                });
+
+                // Stop continuous ping when host changes
+                if (continuousPing) {
+                  setContinuousPing(false);
+                }
+              }}
+              className="flex-1"
+            />
+            <div className="flex items-center gap-2">
+              {renderStatusIcon()}
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={testConnection}
+                disabled={
+                  testStatus === "loading" || !metadata.endpoint_address
+                }
+              >
+                Test Connection
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </PluginComponent>
   );
 };

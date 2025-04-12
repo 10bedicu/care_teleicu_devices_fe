@@ -1,5 +1,76 @@
-@import "tailwindcss";
-
-@import "tw-animate-css";
-
 @config '../tailwind.config.js';
+
+.teleicu-devices-container {
+  @import "tailwindcss";
+
+  .tooltip {
+    @apply relative;
+  }
+
+  .tooltip .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    @apply bg-black/75 backdrop-blur text-white text-center p-2 rounded absolute z-50 text-sm block transition-opacity whitespace-nowrap pointer-events-none;
+  }
+
+  .tooltip .tooltip-left {
+    transform: translateX(20px);
+  }
+
+  .tooltip .tooltip-right {
+    transform: translateX(-20px);
+  }
+
+  .tooltip .tooltip-top {
+    transform: translateY(20px);
+  }
+
+  .tooltip .tooltip-bottom {
+    transform: translateY(-20px);
+  }
+
+  .tooltip .tooltip-right {
+    top: 20%;
+    left: calc(100% + 10px);
+  }
+
+  .tooltip .tooltip-top {
+    bottom: 100%;
+    left: 50%;
+  }
+
+  .tooltip .tooltip-bottom {
+    top: 100%;
+    left: 50%;
+  }
+
+  .tooltip .tooltip-left {
+    top: -5px;
+    right: calc(100% + 10px);
+  }
+
+  .tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 100;
+    transform: translateX(0px);
+    transform: translateY(0px);
+  }
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+}

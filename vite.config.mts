@@ -1,6 +1,7 @@
 import federation from "@originjs/vite-plugin-federation";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
@@ -20,6 +21,7 @@ export default defineConfig({
         "raviger",
       ],
     }),
+    tailwindcss(),
     react(),
   ],
   build: {

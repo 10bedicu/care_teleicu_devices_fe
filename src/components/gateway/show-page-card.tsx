@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   NetworkMetrics,
   PingMetrics,
-} from "@/components/shared/network-metrics";
+} from "@/components/common/network-metrics";
 import {
   CheckCircle,
   XCircle,
@@ -24,6 +24,7 @@ import {
   ReferenceLine,
   ReferenceArea,
 } from "recharts";
+import PluginComponent from "@/components/common/plugin-component";
 
 interface HealthStatus {
   server: boolean;
@@ -350,192 +351,208 @@ export const GatewayShowPageCard = ({ device }: Props) => {
   };
 
   return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="space-y-6">
-          {/* Header with Endpoint and Controls */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            {/* Endpoint Address */}
-            <div className="flex-1">
-              <h4 className="text-sm font-medium text-gray-500">
-                Endpoint Address
-              </h4>
-              <div className="flex items-center gap-2 mt-1">
-                <p className="font-medium">
-                  {device.care_metadata.endpoint_address}
-                </p>
-                {getStatusIcon()}
+    <PluginComponent>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            {/* Header with Endpoint and Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              {/* Endpoint Address */}
+              <div className="flex-1">
+                <h4 className="text-sm font-medium text-gray-500">
+                  Endpoint Address
+                </h4>
+                <div className="flex items-center gap-2 mt-1">
+                  <p className="font-medium">
+                    {device.care_metadata.endpoint_address}
+                  </p>
+                  {getStatusIcon()}
+                </div>
               </div>
+
+              {/* Monitoring Controls */}
+              {connectionStatus !== "idle" && (
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={isMonitoring ? stopMonitoring : startMonitoring}
+                    disabled={connectionStatus !== "connected"}
+                  >
+                    {isMonitoring ? (
+                      <>
+                        <Pause className="h-4 w-4 mr-2" />
+                        <span className="hidden sm:inline">
+                          Pause Monitoring
+                        </span>
+                        <span className="sm:hidden">Pause</span>
+                      </>
+                    ) : (
+                      <>
+                        <Play className="h-4 w-4 mr-2" />
+                        <span className="hidden sm:inline">
+                          Start Monitoring
+                        </span>
+                        <span className="sm:hidden">Start</span>
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={refresh}
+                    disabled={connectionStatus === "checking"}
+                  >
+                    <RefreshCw className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Refresh</span>
+                  </Button>
+                </div>
+              )}
             </div>
 
-            {/* Monitoring Controls */}
+            {/* Health Status */}
             {connectionStatus !== "idle" && (
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={isMonitoring ? stopMonitoring : startMonitoring}
-                  disabled={connectionStatus !== "connected"}
-                >
-                  {isMonitoring ? (
-                    <>
-                      <Pause className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Pause Monitoring</span>
-                      <span className="sm:hidden">Pause</span>
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 mr-2" />
-                      <span className="hidden sm:inline">Start Monitoring</span>
-                      <span className="sm:hidden">Start</span>
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={refresh}
-                  disabled={connectionStatus === "checking"}
-                >
-                  <RefreshCw className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
+              <div className="text-sm">
+                <p className="font-medium text-gray-700">
+                  {getStatusMessage()}:
+                </p>
+                <ul className="mt-1 pl-2 font-medium">
+                  <li
+                    className={
+                      healthData?.server ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    Server: {healthData?.server ? "Online" : "Offline"}
+                  </li>
+                  <li
+                    className={
+                      healthData?.database ? "text-green-600" : "text-red-600"
+                    }
+                  >
+                    Database: {healthData?.database ? "Online" : "Offline"}
+                  </li>
+                </ul>
+                {connectionStatus === "error" && (
+                  <p className="mt-1 text-red-600 font-medium">
+                    {errorMessage}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Network Metrics and Chart */}
+            {connectionStatus !== "idle" && metrics.samples > 0 && (
+              <div className="space-y-4">
+                <NetworkMetrics metrics={metrics} />
+
+                {/* Ping History Chart */}
+                <div className="h-[200px] w-full mt-4">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart
+                      data={pingHistory}
+                      margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
+                    >
+                      {/* Reference areas for ping quality zones */}
+                      <ReferenceArea
+                        y1={0}
+                        y2={PING_THRESHOLDS.EXCELLENT}
+                        fill="#dcfce7"
+                        fillOpacity={0.3}
+                      />
+                      <ReferenceArea
+                        y1={PING_THRESHOLDS.EXCELLENT}
+                        y2={PING_THRESHOLDS.GOOD}
+                        fill="#d1fae5"
+                        fillOpacity={0.3}
+                      />
+                      <ReferenceArea
+                        y1={PING_THRESHOLDS.GOOD}
+                        y2={PING_THRESHOLDS.FAIR}
+                        fill="#fef9c3"
+                        fillOpacity={0.3}
+                      />
+                      <ReferenceArea
+                        y1={PING_THRESHOLDS.FAIR}
+                        y2={1000}
+                        fill="#fee2e2"
+                        fillOpacity={0.3}
+                      />
+
+                      <XAxis
+                        dataKey="timestamp"
+                        tickFormatter={formatTimestamp}
+                        interval="preserveStartEnd"
+                        minTickGap={50}
+                        tick={{
+                          fontSize: 11,
+                          fontFamily: "Figtree, sans-serif",
+                        }}
+                        stroke="#9ca3af"
+                      />
+                      <YAxis
+                        domain={["dataMin - 10", "dataMax + 10"]}
+                        label={{
+                          value: "Ping (ms)",
+                          angle: -90,
+                          position: "insideLeft",
+                          style: {
+                            textAnchor: "middle",
+                            fontSize: 12,
+                            fontFamily: "Figtree, sans-serif",
+                            fill: "#6b7280",
+                          },
+                        }}
+                        tick={{
+                          fontSize: 11,
+                          fontFamily: "Figtree, sans-serif",
+                        }}
+                        stroke="#9ca3af"
+                      />
+
+                      {/* Reference lines for quality thresholds */}
+                      <ReferenceLine
+                        y={PING_THRESHOLDS.EXCELLENT}
+                        stroke="#10b981"
+                        strokeDasharray="3 3"
+                        strokeWidth={1}
+                      />
+                      <ReferenceLine
+                        y={PING_THRESHOLDS.GOOD}
+                        stroke="#22c55e"
+                        strokeDasharray="3 3"
+                        strokeWidth={1}
+                      />
+                      <ReferenceLine
+                        y={PING_THRESHOLDS.FAIR}
+                        stroke="#eab308"
+                        strokeDasharray="3 3"
+                        strokeWidth={1}
+                      />
+
+                      <Tooltip content={<CustomTooltip />} />
+
+                      <Line
+                        type="monotone"
+                        dataKey="ping"
+                        stroke="#2563eb"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{
+                          r: 4,
+                          stroke: "#2563eb",
+                          strokeWidth: 1,
+                          fill: "#ffffff",
+                        }}
+                        isAnimationActive={false}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
             )}
           </div>
-
-          {/* Health Status */}
-          {connectionStatus !== "idle" && (
-            <div className="text-sm">
-              <p className="font-medium text-gray-700">{getStatusMessage()}:</p>
-              <ul className="mt-1 pl-2 font-medium">
-                <li
-                  className={
-                    healthData?.server ? "text-green-600" : "text-red-600"
-                  }
-                >
-                  Server: {healthData?.server ? "Online" : "Offline"}
-                </li>
-                <li
-                  className={
-                    healthData?.database ? "text-green-600" : "text-red-600"
-                  }
-                >
-                  Database: {healthData?.database ? "Online" : "Offline"}
-                </li>
-              </ul>
-              {connectionStatus === "error" && (
-                <p className="mt-1 text-red-600 font-medium">{errorMessage}</p>
-              )}
-            </div>
-          )}
-
-          {/* Network Metrics and Chart */}
-          {connectionStatus !== "idle" && metrics.samples > 0 && (
-            <div className="space-y-4">
-              <NetworkMetrics metrics={metrics} />
-
-              {/* Ping History Chart */}
-              <div className="h-[200px] w-full mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart
-                    data={pingHistory}
-                    margin={{ top: 5, right: 5, left: 5, bottom: 5 }}
-                  >
-                    {/* Reference areas for ping quality zones */}
-                    <ReferenceArea
-                      y1={0}
-                      y2={PING_THRESHOLDS.EXCELLENT}
-                      fill="#dcfce7"
-                      fillOpacity={0.3}
-                    />
-                    <ReferenceArea
-                      y1={PING_THRESHOLDS.EXCELLENT}
-                      y2={PING_THRESHOLDS.GOOD}
-                      fill="#d1fae5"
-                      fillOpacity={0.3}
-                    />
-                    <ReferenceArea
-                      y1={PING_THRESHOLDS.GOOD}
-                      y2={PING_THRESHOLDS.FAIR}
-                      fill="#fef9c3"
-                      fillOpacity={0.3}
-                    />
-                    <ReferenceArea
-                      y1={PING_THRESHOLDS.FAIR}
-                      y2={1000}
-                      fill="#fee2e2"
-                      fillOpacity={0.3}
-                    />
-
-                    <XAxis
-                      dataKey="timestamp"
-                      tickFormatter={formatTimestamp}
-                      interval="preserveStartEnd"
-                      minTickGap={50}
-                      tick={{ fontSize: 11, fontFamily: "Figtree, sans-serif" }}
-                      stroke="#9ca3af"
-                    />
-                    <YAxis
-                      domain={["dataMin - 10", "dataMax + 10"]}
-                      label={{
-                        value: "Ping (ms)",
-                        angle: -90,
-                        position: "insideLeft",
-                        style: {
-                          textAnchor: "middle",
-                          fontSize: 12,
-                          fontFamily: "Figtree, sans-serif",
-                          fill: "#6b7280",
-                        },
-                      }}
-                      tick={{ fontSize: 11, fontFamily: "Figtree, sans-serif" }}
-                      stroke="#9ca3af"
-                    />
-
-                    {/* Reference lines for quality thresholds */}
-                    <ReferenceLine
-                      y={PING_THRESHOLDS.EXCELLENT}
-                      stroke="#10b981"
-                      strokeDasharray="3 3"
-                      strokeWidth={1}
-                    />
-                    <ReferenceLine
-                      y={PING_THRESHOLDS.GOOD}
-                      stroke="#22c55e"
-                      strokeDasharray="3 3"
-                      strokeWidth={1}
-                    />
-                    <ReferenceLine
-                      y={PING_THRESHOLDS.FAIR}
-                      stroke="#eab308"
-                      strokeDasharray="3 3"
-                      strokeWidth={1}
-                    />
-
-                    <Tooltip content={<CustomTooltip />} />
-
-                    <Line
-                      type="monotone"
-                      dataKey="ping"
-                      stroke="#2563eb"
-                      strokeWidth={2}
-                      dot={false}
-                      activeDot={{
-                        r: 4,
-                        stroke: "#2563eb",
-                        strokeWidth: 1,
-                        fill: "#ffffff",
-                      }}
-                      isAnimationActive={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </PluginComponent>
   );
 };

@@ -1,8 +1,18 @@
-const colors = require("tailwindcss/colors");
+const secondary = {
+  50: "#F9FAFB",
+  100: "#FBFAFC",
+  200: "#F7F5FA",
+  300: "#F1EDF7",
+  400: "#DFDAE8",
+  500: "#BFB8CC",
+  600: "#9187A1",
+  700: "#7D728F",
+  800: "#6A5F7A",
+  900: "#453C52",
+};
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  important: false,
   darkMode: ["class"],
   theme: {
     extend: {
@@ -10,6 +20,9 @@ module.exports = {
         sans: ["Figtree", "sans-serif"],
       },
       colors: {
+        green: "colors.emerald",
+        yellow: "colors.amber",
+        purple: "colors.violet",
         primary: {
           100: "#def7ec",
           200: "#bcf0da",
@@ -22,22 +35,12 @@ module.exports = {
           900: "#014737",
           DEFAULT: "#0d9f6e",
         },
-        secondary: {
-          50: "#F9FAFB",
-          100: "#FBFAFC",
-          200: "#F7F5FA",
-          300: "#F1EDF7",
-          400: "#DFDAE8",
-          500: "#BFB8CC",
-          600: "#9187A1",
-          700: "#7D728F",
-          800: "#6A5F7A",
-          900: "#453C52",
-          DEFAULT: "#BFB8CC",
-        },
-        danger: colors.red,
-        warning: colors.amber,
-        alert: colors.violet,
+        secondary: secondary,
+        danger: "colors.red",
+        warning: "colors.amber",
+        alert: "colors.violet",
+        gray: "colors.gray",
+        zinc: "colors.zinc",
       },
       scale: {
         25: "0.25",
@@ -49,11 +52,25 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      fontSize: {
+        "7xl": "5rem",
+      },
+      width: {
+        "80mm": "80mm",
+      },
+      height: {
+        "170mm": "170mm",
+      },
+      keyframes: {
+        "caret-blink": {
+          "0%,70%,100%": { opacity: "1" },
+          "20%,50%": { opacity: "0" },
+        },
+      },
+      animation: {
+        "caret-blink": "caret-blink 1.25s ease-out infinite",
+      },
     },
   },
-  corePlugins: {
-    preflight: false,
-  },
-  content: ["./src/**/*.{html,md,js,jsx,ts,tsx}"],
-  plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
+  content: ["./src/**/*.{html,md,js,jsx,ts,tsx}", "./index.html"],
 };

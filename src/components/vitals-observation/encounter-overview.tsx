@@ -1,3 +1,4 @@
+import PluginComponent from "@/components/common/plugin-component";
 import { Skeleton } from "@/components/ui/skeleton";
 import deviceApi from "@/lib/device/deviceApi";
 import { DeviceListResponse } from "@/lib/device/types";
@@ -32,14 +33,16 @@ export const VitalsObservationEncounterOverview = ({ encounter }: Props) => {
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      {devices.map((device) => (
-        <EncounterVitalsObservation
-          key={device.id}
-          device={device as unknown as VitalsObservationDevice}
-        />
-      ))}
-    </div>
+    <PluginComponent>
+      <div className="flex flex-col gap-4">
+        {devices.map((device) => (
+          <EncounterVitalsObservation
+            key={device.id}
+            device={device as unknown as VitalsObservationDevice}
+          />
+        ))}
+      </div>
+    </PluginComponent>
   );
 };
 
