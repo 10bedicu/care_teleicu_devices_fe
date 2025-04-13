@@ -1,11 +1,11 @@
+import { DeviceListResponse } from "@/lib/device/types";
+import { Encounter } from "@/lib/types/encounter";
 import PluginComponent from "@/components/common/plugin-component";
 import { Skeleton } from "@/components/ui/skeleton";
-import deviceApi from "@/lib/device/deviceApi";
-import { DeviceListResponse } from "@/lib/device/types";
-import { query } from "@/lib/request";
-import { Encounter } from "@/lib/types/encounter";
-import { VitalsObservationMonitor } from "@/lib/vitals-observation/hl7-monitor/vitals-observation-monitor";
 import { VitalsObservationDevice } from "@/lib/vitals-observation/types";
+import { VitalsObservationMonitor } from "@/lib/vitals-observation/hl7-monitor/vitals-observation-monitor";
+import deviceApi from "@/lib/device/deviceApi";
+import { query } from "@/lib/request";
 import { useQuery } from "@tanstack/react-query";
 
 interface Props {
@@ -16,6 +16,7 @@ export const VitalsObservationEncounterOverview = ({ encounter }: Props) => {
   const { data: devices, isLoading } = useQuery({
     queryKey: ["vitals-observation-devices", encounter.id],
     queryFn: query(deviceApi.listDevices, {
+      pathParams: { facilityId: encounter.facility.id },
       queryParams: {
         care_type: "vitals-observation",
         current_encounter: encounter.id,
