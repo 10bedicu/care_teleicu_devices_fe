@@ -62,6 +62,10 @@ const EncounterVitalsObservation = ({
 }) => {
   const { facilityId } = usePathParams("/facility/:facilityId/*")!;
 
+  if (device.care_metadata.type !== "HL7-Monitor") {
+    return null;
+  }
+
   if (!device.care_metadata.gateway) {
     return (
       <div className="text-xs bg-amber-50 px-3 py-2 rounded-md flex items-center gap-2 border border-amber-200 shadow-sm mt-2">

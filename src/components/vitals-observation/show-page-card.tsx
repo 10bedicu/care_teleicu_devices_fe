@@ -49,6 +49,10 @@ export const VitalsObservationShowPageCard = ({ device }: Props) => {
     device.care_metadata.endpoint_address
   );
 
+  if (device.care_metadata.type !== "HL7-Monitor") {
+    return null;
+  }
+
   return (
     <PluginComponent>
       <div className="flex flex-col items-center gap-4">
