@@ -7,7 +7,9 @@ import { VitalsObservationMonitor } from "@/lib/vitals-observation/hl7-monitor/v
 import deviceApi from "@/lib/device/deviceApi";
 import { query } from "@/lib/request";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, SettingsIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { navigate, usePathParams } from "raviger";
 
 interface Props {
   encounter: Encounter;
@@ -58,14 +60,27 @@ const EncounterVitalsObservation = ({
 }: {
   device: VitalsObservationDevice;
 }) => {
+  const { facilityId } = usePathParams("/facility/:facilityId/*")!;
+
   if (!device.care_metadata.gateway) {
     return (
       <div className="text-xs bg-amber-50 px-3 py-2 rounded-md flex items-center gap-2 border border-amber-200 shadow-sm mt-2">
         <AlertTriangle className="h-4 w-4 text-amber-500" />
         <span className="font-medium text-amber-700">Warning:</span>
         <span className="text-amber-700 flex-1">
-          No gateway device has been configured for this device.
+          No gateway device has been configured for the vitals observation
+          device "{device.user_friendly_name || device.registered_name}".
         </span>
+        <Button
+          variant="warning"
+          size="sm"
+          onClick={() =>
+            navigate(`/facility/${facilityId}/settings/devices/${device.id}`)
+          }
+        >
+          <SettingsIcon className="size-4" />
+          Configure
+        </Button>
       </div>
     );
   }
