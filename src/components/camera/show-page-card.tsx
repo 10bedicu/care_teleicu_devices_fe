@@ -3,7 +3,7 @@ import { CameraFeedProvider } from "@/lib/camera/camera-feed-context";
 import cameraPositionPresetApi from "@/lib/camera/cameraPositionPresetApi";
 import CameraFeedControls from "@/lib/camera/player/feed-controls";
 import CameraFeedPlayer from "@/lib/camera/player/feed-player";
-import { CameraDevice, PositionPreset } from "@/lib/camera/types";
+import { CameraDevice, PositionPreset, PTZPayload } from "@/lib/camera/types";
 import { query, mutate } from "@/lib/request";
 import { Link } from "raviger";
 import { useQuery } from "@tanstack/react-query";
@@ -149,6 +149,7 @@ const CameraPositionPresets = ({
   const [editPresetName, setEditPresetName] = useState("");
   const [editSelectedLocation, setEditSelectedLocation] =
     useState<LocationList | null>(null);
+  const [editPTZ, setEditPTZ] = useState<PTZPayload | null>(null);
 
   // Fetch presets - the API now returns location data directly
   const { data, isLoading } = useQuery({
@@ -259,17 +260,23 @@ const CameraPositionPresets = ({
     setPresetToEdit(preset);
     setEditPresetName(preset.name);
     setEditSelectedLocation(preset.location);
+    setEditPTZ(preset.ptz);
     setEditPopoverOpen(true);
   };
 
   // Add handler for update preset
   const handleUpdatePreset = () => {
-    if (!presetToEdit || !editPresetName.trim() || !editSelectedLocation)
+    if (
+      !presetToEdit ||
+      !editPresetName.trim() ||
+      !editSelectedLocation ||
+      !editPTZ
+    )
       return;
 
     updatePresetMutation.mutate({
       name: editPresetName.trim(),
-      ptz: presetToEdit.ptz, // Keep the same PTZ position
+      ptz: editPTZ,
       location: editSelectedLocation.id,
     });
   };
@@ -539,6 +546,60 @@ const CameraPositionPresets = ({
                                       value={editSelectedLocation}
                                       disabled={updatePresetMutation.isPending}
                                     />
+                                  </div>
+                                  <hr className="my-4 bg-gray-200 h-px" />
+                                  <div className="space-y-2">
+                                    <Label>Current PTZ Position</Label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      <div className="space-y-1">
+                                        <Label className="text-xs text-gray-500">
+                                          Pan (X)
+                                        </Label>
+                                        <Input
+                                          value={editPTZ?.x.toFixed(1)}
+                                          disabled
+                                          className="h-8 text-sm"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-xs text-gray-500">
+                                          Tilt (Y)
+                                        </Label>
+                                        <Input
+                                          value={editPTZ?.y.toFixed(1)}
+                                          disabled
+                                          className="h-8 text-sm"
+                                        />
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-xs text-gray-500">
+                                          Zoom
+                                        </Label>
+                                        <Input
+                                          value={editPTZ?.zoom.toFixed(1)}
+                                          disabled
+                                          className="h-8 text-sm"
+                                        />
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="w-full h-8 text-xs mt-2"
+                                      onClick={() => {
+                                        if (cameraStatus) {
+                                          setEditPTZ(cameraStatus.position);
+                                        }
+                                      }}
+                                      disabled={
+                                        !cameraStatus ||
+                                        updatePresetMutation.isPending
+                                      }
+                                    >
+                                      <Move className="h-3.5 w-3.5 mr-1.5" />
+                                      Update with Camera's Current Position
+                                    </Button>
+                                    <hr className="my-4 bg-gray-200 h-px" />
                                   </div>
                                   <div className="flex justify-end gap-2">
                                     <Button
