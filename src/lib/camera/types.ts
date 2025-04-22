@@ -14,7 +14,7 @@ export interface CameraDevice extends DeviceList {
   care_type: "camera";
   care_metadata: {
     type: CameraType;
-    gateway: LinkedGateway;
+    gateway: LinkedGateway | null;
     endpoint_address: string;
     username: string;
     password: string;

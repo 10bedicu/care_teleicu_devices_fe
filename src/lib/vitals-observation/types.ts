@@ -63,6 +63,6 @@ export interface VitalsObservationDevice extends DeviceList {
       care_metadata: {
         endpoint_address: string;
       };
-    };
+    } | null;
   };
 }

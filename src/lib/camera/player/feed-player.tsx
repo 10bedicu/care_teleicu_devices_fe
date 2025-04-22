@@ -11,7 +11,7 @@ export default function CameraFeedPlayer() {
 
   return (
     <VideoStreamPlayer
-      playerRef={playerRef}
+      playerRef={playerRef as React.RefObject<HTMLVideoElement>}
       streamUrl={streamUrl}
       className="w-full object-contain"
       onSuccess={() => {

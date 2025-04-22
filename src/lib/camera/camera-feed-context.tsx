@@ -16,14 +16,14 @@ type PlayerStatus = "loading" | "playing" | "stopped";
 type ICameraFeedContext = {
   device: CameraDevice;
 
-  playerRef: React.RefObject<HTMLVideoElement>;
+  playerRef: React.RefObject<HTMLVideoElement | null>;
   playedOn: Date | undefined;
   setPlayedOn: (playedOn: Date) => void;
 
   playerStatus: PlayerStatus;
   setPlayerStatus: (playerStatus: PlayerStatus) => void;
 
-  streamUrl: string | undefined;
+  streamUrl: string | undefined | null;
   isAuthenticating: boolean;
 
   cameraStatus: GetStatusResponse | undefined;

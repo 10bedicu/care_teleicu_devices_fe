@@ -19,8 +19,12 @@ export const useStreamUrl = (device: CameraDevice) => {
 };
 
 const makeStreamUrl = (device: CameraDevice, token?: string) => {
-  const host = device.care_metadata.gateway.care_metadata.endpoint_address;
+  const host = device.care_metadata.gateway?.care_metadata.endpoint_address;
   const streamId = device.care_metadata.stream_id;
+
+  if (!host) {
+    return null;
+  }
 
   const url = new URL(`wss://${host}/stream/${streamId}/channel/0/mse`);
 
