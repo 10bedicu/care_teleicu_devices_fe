@@ -16,10 +16,6 @@ export default function CameraFeedPlayer() {
     setPlayedOn,
   } = useCameraFeed();
 
-  if (!streamUrl || isAuthenticating) {
-    return <StreamLoading />;
-  }
-
   useEffect(() => {
     if (playerStatus === "waiting") {
       const timeout = setTimeout(() => {
@@ -29,6 +25,14 @@ export default function CameraFeedPlayer() {
       return () => clearTimeout(timeout);
     }
   }, [playerStatus]);
+
+  if (isAuthenticating) {
+    return <StreamLoading />;
+  }
+
+  if (!streamUrl) {
+    return <FallbackOverlay />;
+  }
 
   return (
     <>
@@ -55,16 +59,16 @@ const FallbackOverlay = () => {
   const { isAuthenticating, playerStatus, isCameraStatusError } =
     useCameraFeed();
 
+  if (isCameraStatusError && playerStatus !== "playing") {
+    return <UnableToCommunicateWithCamera />;
+  }
+
   if (
     playerStatus === "loading" ||
     playerStatus === "waiting" ||
     isAuthenticating
   ) {
     return <StreamLoading />;
-  }
-
-  if (isCameraStatusError && playerStatus !== "playing") {
-    return <UnableToCommunicateWithCamera />;
   }
 
   if (playerStatus === "unauthorized") {

@@ -9,6 +9,7 @@ export const useStreamUrl = (device: CameraDevice) => {
     queryKey: ["camera-feed-stream-url", device.id],
     queryFn: query(cameraActionApi.getStreamToken, {
       pathParams: { cameraId: device.id },
+      silent: true,
     }),
     select: (data: { token: string }) => makeStreamUrl(device, data.token),
   });

@@ -1,7 +1,7 @@
 import federation from "@originjs/vite-plugin-federation";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig({
@@ -34,8 +34,6 @@ export default defineConfig({
     rollupOptions: {
       output: {
         format: "esm",
-        entryFileNames: "assets/[name].js",
-        chunkFileNames: "assets/[name].js",
       },
       input: {
         main: "./src/index.tsx",

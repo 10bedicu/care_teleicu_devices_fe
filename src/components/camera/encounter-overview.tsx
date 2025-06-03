@@ -52,6 +52,7 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
   const { mutate: absoluteMove, isPending: isMoving } = useMutation({
     mutationFn: mutate(cameraActionApi.absoluteMove, {
       pathParams: { cameraId: activeCamera ?? "" },
+      silent: true,
     }),
   });
 
@@ -129,7 +130,7 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
           {cameras.results.map((camera) => (
             <TabsContent key={camera.id} value={camera.id}>
               <CameraFeedProvider device={camera}>
-                <div className="relative aspect-video bg-gray-950 group rounded-xl overflow-hidden shadow-lg">
+                <div className="relative aspect-[16/9] bg-gray-950 group rounded-xl overflow-hidden shadow-lg">
                   <CameraFeedPlayer />
                   <div className="hidden sm:block">
                     <CameraFeedControls

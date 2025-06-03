@@ -90,7 +90,7 @@ const CameraStream = ({ device }: { device: CameraDevice }) => {
 
   return (
     <CameraFeedProvider device={device}>
-      <div className="relative aspect-video bg-gray-950 group rounded-xl overflow-hidden shadow-lg">
+      <div className="relative aspect-[16/9] bg-gray-950 group rounded-xl overflow-hidden shadow-lg">
         <CameraFeedPlayer />
         <div className="hidden sm:block">
           <CameraFeedControls inlineView />
@@ -254,6 +254,7 @@ const CameraPositionPresets = ({
   const absoluteMoveMutation = useMutation({
     mutationFn: mutate(cameraActionApi.absoluteMove, {
       pathParams: { cameraId: device.id },
+      silent: true,
     }),
     onSuccess: () => {
       // Refresh camera status after moving
