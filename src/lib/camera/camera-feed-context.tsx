@@ -37,6 +37,7 @@ type ICameraFeedContext = {
   isCameraStatusError: boolean;
   ptzPrecision: number;
   setPtzPrecision: Dispatch<SetStateAction<number>>;
+  reset: () => void;
 };
 
 const CameraFeedContext = createContext<ICameraFeedContext | null>(null);
@@ -53,7 +54,11 @@ export function CameraFeedProvider({
   const [playedOn, setPlayedOn] = useState<Date>();
   const [ptzPrecision, setPtzPrecision] = useState(1);
 
-  const { data: streamUrl, isPending: isAuthenticating } = useStreamUrl(device);
+  const {
+    data: streamUrl,
+    isPending: isAuthenticating,
+    refetch: resetStreamUrl,
+  } = useStreamUrl(device);
 
   const {
     data: cameraStatus,
@@ -77,6 +82,7 @@ export function CameraFeedProvider({
         isCameraStatusError,
         ptzPrecision,
         setPtzPrecision,
+        reset: resetStreamUrl,
       }}
     >
       {children}
