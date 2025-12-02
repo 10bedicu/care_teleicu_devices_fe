@@ -16,6 +16,8 @@ import {
 import { NetworkMetrics } from "@/components/common/network-metrics";
 import PluginComponent from "@/components/common/plugin-component";
 
+import { useTranslation } from "@/hooks/useTranslation";
+
 type TestStatus = "idle" | "loading" | "success" | "partial" | "error";
 
 export const GatewayDeviceConfigureForm = ({
@@ -25,6 +27,8 @@ export const GatewayDeviceConfigureForm = ({
   const [testStatus, setTestStatus] = useState<TestStatus>("idle");
   const [statusMessage, setStatusMessage] = useState<string>("");
   const [popoverOpen, setPopoverOpen] = useState(false);
+
+  const { t } = useTranslation();
 
   const {
     healthData,
@@ -99,16 +103,17 @@ export const GatewayDeviceConfigureForm = ({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-green-600">
             <CheckCircle className="h-4 w-4" />
-            <span className="font-medium">Connection Successful</span>
+            <span className="font-medium">{t("connection_successful")}</span>
           </div>
           <div className="text-sm text-gray-600">
             <p>{getServiceStatusMessage()}:</p>
             <ul className="mt-1 pl-2">
               <li className="text-green-600">
-                Server: {healthData?.server ? "Online" : "Offline"}
+                {t("server")}: {healthData?.server ? t("online") : t("offline")}
               </li>
               <li className="text-green-600">
-                Database: {healthData?.database ? "Online" : "Offline"}
+                {t("database")}:{" "}
+                {healthData?.database ? t("online") : t("offline")}
               </li>
             </ul>
           </div>
@@ -122,7 +127,7 @@ export const GatewayDeviceConfigureForm = ({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-yellow-600">
             <AlertTriangle className="h-4 w-4" />
-            <span className="font-medium">Partial Connection</span>
+            <span className="font-medium">{t("partial_connection")}</span>
           </div>
           <div className="text-sm text-gray-600">
             <p>{getServiceStatusMessage()}:</p>
@@ -132,14 +137,15 @@ export const GatewayDeviceConfigureForm = ({
                   healthData?.server ? "text-green-600" : "text-red-600"
                 }
               >
-                Server: {healthData?.server ? "Online" : "Offline"}
+                {t("server")}: {healthData?.server ? t("online") : t("offline")}
               </li>
               <li
                 className={
                   healthData?.database ? "text-green-600" : "text-red-600"
                 }
               >
-                Database: {healthData?.database ? "Online" : "Offline"}
+                {t("database")}:{" "}
+                {healthData?.database ? t("online") : t("offline")}
               </li>
             </ul>
           </div>
@@ -152,10 +158,10 @@ export const GatewayDeviceConfigureForm = ({
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-red-600">
             <XCircle className="h-4 w-4" />
-            <span className="font-medium">Connection Failed</span>
+            <span className="font-medium">{t("connection_failed")}</span>
           </div>
           <div className="text-sm text-gray-600">
-            <p>Error details:</p>
+            <p>{t("error_details")}:</p>
             <p className="mt-1 text-red-600">{statusMessage}</p>
           </div>
         </div>
@@ -201,13 +207,13 @@ export const GatewayDeviceConfigureForm = ({
       <div className="space-y-4">
         <div>
           <Label className="mb-2">
-            Gateway's Endpoint Address
+            {t("gateway_endpoint_address")}
             <span className="text-red-500">*</span>
           </Label>
           <div className="flex items-center gap-2">
             <Input
               autoComplete=""
-              placeholder="Gateway's Endpoint Address without http:// or https://"
+              placeholder={t("gateway_endpoint_address_placeholder")}
               value={metadata.endpoint_address}
               onChange={(e) => {
                 onChange({
@@ -227,7 +233,7 @@ export const GatewayDeviceConfigureForm = ({
                 onClick={testConnection}
                 disabled={isLoading || !metadata.endpoint_address}
               >
-                Test Connection
+                {t("test_connection")}
               </Button>
             </div>
           </div>

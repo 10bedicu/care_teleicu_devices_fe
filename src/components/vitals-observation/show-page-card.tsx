@@ -12,6 +12,8 @@ import {
 
 import PluginComponent from "@/components/common/plugin-component";
 
+import { useTranslation } from "@/hooks/useTranslation";
+
 interface Props {
   device: {
     care_type: "vitals-observation";
@@ -23,34 +25,36 @@ interface Props {
         care_type: "gateway";
         care_metadata: {
           endpoint_address: string;
+          insecure: boolean;
         };
       } | null;
     };
   };
 }
 
-const getWebSocketUrl = (gateway: string, device: string) => {
-  const protocol = location.protocol === "https:" ? "wss:" : "wss:";
-  return `${protocol}//${gateway}/observations/${device}`;
+const getWebSocketUrl = ({ care_metadata: meta }: Props["device"]) => {
+  const scheme = meta.gateway?.care_metadata.insecure ? "ws:" : "wss:";
+  const gateway = meta.gateway?.care_metadata.endpoint_address;
+  const deviceAddress = meta.endpoint_address;
+  return `${scheme}//${gateway}/observations/${deviceAddress}`;
 };
 
 export const VitalsObservationShowPageCard = ({ device }: Props) => {
+  const { t } = useTranslation();
+
   if (!device.care_metadata.gateway) {
     return (
       <div className="text-xs bg-amber-50 px-3 py-2 rounded-md flex items-center gap-2 border border-amber-200 shadow-sm mt-2">
         <AlertTriangle className="h-4 w-4 text-amber-500" />
-        <span className="font-medium text-amber-700">Warning:</span>
+        <span className="font-medium text-amber-700">{t("warning")}</span>
         <span className="text-amber-700 flex-1">
-          No gateway device has been configured for this device.
+          {t("no_gateway_device_configured_for_vitals_observation_device")}
         </span>
       </div>
     );
   }
 
-  const socketUrl = getWebSocketUrl(
-    device.care_metadata.gateway.care_metadata.endpoint_address,
-    device.care_metadata.endpoint_address,
-  );
+  const socketUrl = getWebSocketUrl(device);
 
   if (device.care_metadata.type !== "HL7-Monitor") {
     return null;
@@ -62,9 +66,11 @@ export const VitalsObservationShowPageCard = ({ device }: Props) => {
         {/* Device Information Card */}
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>Vitals Observation Device Configuration</CardTitle>
+            <CardTitle>
+              {t("vitals_observation_device_configuration")}
+            </CardTitle>
             <CardDescription>
-              Details about the connected vitals observation device
+              {t("details_about_the_connected_vitals_observation_device")}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -72,7 +78,7 @@ export const VitalsObservationShowPageCard = ({ device }: Props) => {
               <div className="space-y-2">
                 <div>
                   <span className="font-medium text-gray-500 dark:text-gray-400">
-                    Device Type:
+                    {t("device_type")}:
                   </span>
                   <span className="ml-2 font-semibold">
                     {device.care_metadata.type}
@@ -80,7 +86,7 @@ export const VitalsObservationShowPageCard = ({ device }: Props) => {
                 </div>
                 <div>
                   <span className="font-medium text-gray-500 dark:text-gray-400">
-                    Endpoint Address:
+                    {t("endpoint_address")}:
                   </span>
                   <span className="ml-2 font-semibold">
                     {device.care_metadata.endpoint_address}
@@ -90,7 +96,7 @@ export const VitalsObservationShowPageCard = ({ device }: Props) => {
               <div className="space-y-2">
                 <div>
                   <span className="font-medium text-gray-500 dark:text-gray-400">
-                    Gateway:
+                    {t("gateway")}
                   </span>
                   <span className="ml-2 font-semibold">
                     {device.care_metadata.gateway.registered_name}
@@ -98,7 +104,7 @@ export const VitalsObservationShowPageCard = ({ device }: Props) => {
                 </div>
                 <div>
                   <span className="font-medium text-gray-500 dark:text-gray-400">
-                    Gateway Endpoint:
+                    {t("gateway_endpoint")}:
                   </span>
                   <span className="ml-2 font-semibold break-all">
                     {
@@ -112,7 +118,7 @@ export const VitalsObservationShowPageCard = ({ device }: Props) => {
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
               <details className="text-xs text-gray-500 dark:text-gray-400">
                 <summary className="cursor-pointer hover:text-gray-700 dark:hover:text-gray-300 select-none">
-                  Show Technical Details
+                  {t("show_technical_details")}
                 </summary>
                 <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-md">
                   <code className="break-all text-[11px] whitespace-pre-wrap">

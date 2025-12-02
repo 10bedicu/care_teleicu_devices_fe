@@ -14,6 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { useTranslation } from "@/hooks/useTranslation";
+
 interface Props {
   device: CameraDevice;
   locationId: string;
@@ -43,6 +45,8 @@ export const PresetDropdown = ({
       queryParams: { location: locationId, limit: 100, ordering: "sort_index" },
     }),
   });
+
+  const { t } = useTranslation();
 
   const { mutate: updatePreset } = useMutation({
     mutationFn: (preset: PositionPreset) =>
@@ -76,7 +80,7 @@ export const PresetDropdown = ({
           disabled={!cameraStatus || isMoving}
         >
           <SaveIcon className="size-4" />
-          <span>Update</span>
+          <span>{t("update")}</span>
         </Button>
       )}
       <DropdownMenu>

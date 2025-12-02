@@ -1,5 +1,7 @@
 import { Activity, Waves } from "lucide-react";
 
+import { useTranslation } from "@/hooks/useTranslation";
+
 export interface PingMetrics {
   current: number;
   min: number;
@@ -28,6 +30,8 @@ const getJitterQualityLabel = (jitter: number) => {
 };
 
 export const NetworkMetrics = ({ metrics }: NetworkMetricsProps) => {
+  const { t } = useTranslation();
+
   if (metrics.samples === 0) return null;
 
   const { label: latencyLabel, color: latencyColor } = getPingQualityLabel(
@@ -40,26 +44,28 @@ export const NetworkMetrics = ({ metrics }: NetworkMetricsProps) => {
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-gray-600" />
           <span className="text-sm font-semibold text-gray-700">
-            Network Metrics
+            {t("network_metrics")}
           </span>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3 text-sm">
         <div className="flex flex-col">
-          <span className="text-gray-500 font-medium mb-1">Latency:</span>
+          <span className="text-gray-500 font-medium mb-1">
+            {t("latency")}:
+          </span>
           <span className={`${latencyColor} font-semibold`}>
-            {metrics.current}ms{" "}
+            {metrics.current} {t("ms")}{" "}
             <span className="font-medium">({latencyLabel})</span>
           </span>
         </div>
         <div className="flex flex-col">
           <span className="text-gray-500 font-medium mb-1">
-            Min / Avg / Max:
+            {t("min")} / {t("avg")} / {t("max")}:
           </span>
           <span className="font-mono">
             <span className="text-green-600 font-semibold">
-              {metrics.min}ms
+              {metrics.min} {t("ms")}
             </span>
             <span className="text-gray-400"> / </span>
             <span
@@ -67,7 +73,7 @@ export const NetworkMetrics = ({ metrics }: NetworkMetricsProps) => {
                 getPingQualityLabel(metrics.avg).color
               } font-semibold`}
             >
-              {metrics.avg}ms
+              {metrics.avg} {t("ms")}
             </span>
             <span className="text-gray-400"> / </span>
             <span
@@ -75,20 +81,20 @@ export const NetworkMetrics = ({ metrics }: NetworkMetricsProps) => {
                 getPingQualityLabel(metrics.max).color
               } font-semibold`}
             >
-              {metrics.max}ms
+              {metrics.max} {t("ms")}
             </span>
           </span>
         </div>
         <div className="flex flex-col col-span-2 mt-1">
           <div className="flex items-center gap-2">
             <Waves className="h-4 w-4 text-gray-500" />
-            <span className="text-gray-500 font-medium">Jitter:</span>
+            <span className="text-gray-500 font-medium">{t("jitter")}:</span>
             <span
               className={`${
                 getJitterQualityLabel(metrics.jitter).color
               } font-semibold`}
             >
-              {metrics.jitter}ms{" "}
+              {metrics.jitter} {t("ms")}{" "}
               <span className="font-medium">
                 ({getJitterQualityLabel(metrics.jitter).label})
               </span>

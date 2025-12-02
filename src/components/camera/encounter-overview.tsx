@@ -27,13 +27,13 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
   const [isAwayFromPreset, setIsAwayFromPreset] = useState(false);
 
   const { data: cameras, isLoading } = useQuery({
-    queryKey: ["camera-devices", encounter.current_location?.id],
+    queryKey: ["camera-devices", encounter.id],
     queryFn: query(camerasOfPresetLocationApi.list, {
       pathParams: {
-        locationId: encounter.current_location?.id ?? "",
+        encounterId: encounter.id,
       },
     }),
-    enabled: !!encounter.current_location,
+    enabled: !!encounter.current_location?.id,
   });
 
   const { data: positionPresets, isFetching: isFetchingPresets } = useQuery({
@@ -56,24 +56,32 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
     }),
   });
 
-  useEffect(() => {
-    if (isFetchingPresets) {
-      return;
-    }
+  useEffect(
+    () => {
+      if (isFetchingPresets) {
+        return;
+      }
 
-    if (positionPresets?.results.length) {
-      setSelectedPreset(
-        positionPresets.results.find((p) => p.is_default) ||
-          positionPresets.results[0],
-      );
-    }
-  }, [positionPresets?.results.length, isFetchingPresets]);
+      if (positionPresets?.results.length) {
+        setSelectedPreset(
+          positionPresets.results.find((p) => p.is_default) ||
+            positionPresets.results[0],
+        );
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [positionPresets?.results.length, isFetchingPresets],
+  );
 
-  useEffect(() => {
-    if (selectedPreset) {
-      absoluteMove(selectedPreset.ptz);
-    }
-  }, [selectedPreset]);
+  useEffect(
+    () => {
+      if (selectedPreset) {
+        absoluteMove(selectedPreset.ptz);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectedPreset],
+  );
 
   // Set the first camera as active when cameras data is loaded
   if (cameras?.results.length && !activeCamera) {
@@ -84,10 +92,6 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
     setSelectedPreset(preset);
     setIsAwayFromPreset(false);
   };
-
-  if (encounter.status === "completed") {
-    return null;
-  }
 
   if (isLoading || !cameras) {
     return null;

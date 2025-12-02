@@ -26,6 +26,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NetworkMetrics } from "@/components/common/network-metrics";
 import PluginComponent from "@/components/common/plugin-component";
 
+import { useTranslation } from "@/hooks/useTranslation";
+
 interface Props {
   device: {
     care_type: string;
@@ -55,11 +57,15 @@ export const GatewayShowPageCard = ({ device }: Props) => {
     stopMonitoring,
   } = useGatewayHealthCheck(device.care_metadata.endpoint_address);
 
-  useEffect(() => {
-    if (!isMonitoring) {
-      startMonitoring();
-    }
-  }, []);
+  useEffect(
+    () => {
+      if (!isMonitoring) {
+        startMonitoring();
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isMonitoring],
+  );
 
   const getConnectionStatus = (): ConnectionStatus => {
     if (isLoading) return "checking";
@@ -103,8 +109,17 @@ export const GatewayShowPageCard = ({ device }: Props) => {
     return new Date(timestamp).toLocaleTimeString();
   };
 
+  const { t } = useTranslation();
   // Custom tooltip component for the chart
-  const CustomTooltip = ({ active, payload, label }: any) => {
+  const CustomTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    payload?: { value: number }[];
+    label?: number;
+  }) => {
     if (!active || !payload || !payload.length) return null;
 
     const ping = payload[0].value;
@@ -124,11 +139,11 @@ export const GatewayShowPageCard = ({ device }: Props) => {
 
     return (
       <div className="bg-white p-2 border border-gray-200 rounded-md shadow-md text-xs">
-        <p className="font-medium">{formatTimestamp(label)}</p>
+        {label && <p className="font-medium">{formatTimestamp(label)}</p>}
         <p className="flex items-center gap-1 mt-1">
-          <span>Ping:</span>
+          <span>{t("ping")}:</span>
           <span className={`font-mono font-medium ${qualityColor}`}>
-            {ping} ms
+            {ping} {t("ms")}
           </span>
           <span className={`text-xs ${qualityColor}`}>({qualityLabel})</span>
         </p>
@@ -146,7 +161,7 @@ export const GatewayShowPageCard = ({ device }: Props) => {
               {/* Endpoint Address */}
               <div className="flex-1">
                 <h4 className="text-sm font-medium text-gray-500">
-                  Endpoint Address
+                  {t("endpoint_address")}
                 </h4>
                 <div className="flex items-center gap-2 mt-1">
                   <p className="font-medium">
@@ -169,17 +184,17 @@ export const GatewayShowPageCard = ({ device }: Props) => {
                       <>
                         <Pause className="h-4 w-4 mr-2" />
                         <span className="hidden sm:inline">
-                          Pause Monitoring
+                          {t("pause_monitoring")}
                         </span>
-                        <span className="sm:hidden">Pause</span>
+                        <span className="sm:hidden">{t("pause")}</span>
                       </>
                     ) : (
                       <>
                         <Play className="h-4 w-4 mr-2" />
                         <span className="hidden sm:inline">
-                          Start Monitoring
+                          {t("start_monitoring")}
                         </span>
-                        <span className="sm:hidden">Start</span>
+                        <span className="sm:hidden">{t("start")}</span>
                       </>
                     )}
                   </Button>
@@ -199,14 +214,16 @@ export const GatewayShowPageCard = ({ device }: Props) => {
                       healthData?.server ? "text-green-600" : "text-red-600"
                     }
                   >
-                    Server: {healthData?.server ? "Online" : "Offline"}
+                    {t("server")}:{" "}
+                    {healthData?.server ? t("online") : t("offline")}
                   </li>
                   <li
                     className={
                       healthData?.database ? "text-green-600" : "text-red-600"
                     }
                   >
-                    Database: {healthData?.database ? "Online" : "Offline"}
+                    {t("database")}:{" "}
+                    {healthData?.database ? t("online") : t("offline")}
                   </li>
                 </ul>
                 {error && (
@@ -269,13 +286,17 @@ export const GatewayShowPageCard = ({ device }: Props) => {
                       <YAxis
                         domain={["dataMin - 10", "dataMax + 10"]}
                         label={{
-                          value: "Ping (ms)",
+                          value: `${t("ping")} (${t("ms")})`,
                           angle: -90,
+                          // eslint-disable-next-line i18next/no-literal-string
                           position: "insideLeft",
                           style: {
+                            // eslint-disable-next-line i18next/no-literal-string
                             textAnchor: "middle",
                             fontSize: 12,
+                            // eslint-disable-next-line i18next/no-literal-string
                             fontFamily: "Figtree, sans-serif",
+                            // eslint-disable-next-line i18next/no-literal-string
                             fill: "#6b7280",
                           },
                         }}

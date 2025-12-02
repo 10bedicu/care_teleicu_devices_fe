@@ -1,7 +1,12 @@
-import { TableSkeleton } from "@/components/common/skeleton-loading";
-import { CameraDevice } from "@/lib/camera/types";
-import { query, mutate } from "@/lib/request";
 import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { EyeIcon } from "lucide-react";
+
+import cameraActionApi from "@/lib/camera/cameraActionApi";
+import { CameraDevice } from "@/lib/camera/types";
+import { mutate, query } from "@/lib/request";
+
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -10,10 +15,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { EyeIcon } from "lucide-react";
-import cameraActionApi from "@/lib/camera/cameraActionApi";
+
+import { TableSkeleton } from "@/components/common/skeleton-loading";
+
+import { useTranslation } from "@/hooks/useTranslation";
 
 export const InbuiltPresets = ({ device }: { device: CameraDevice }) => {
   const queryClient = useQueryClient();
@@ -36,6 +41,8 @@ export const InbuiltPresets = ({ device }: { device: CameraDevice }) => {
     },
   });
 
+  const { t } = useTranslation();
+
   const handleGoToPreset = (presetNumber: number) => {
     gotoPreset.mutate({ preset: presetNumber });
   };
@@ -48,7 +55,7 @@ export const InbuiltPresets = ({ device }: { device: CameraDevice }) => {
     <div className="w-full">
       {Object.keys(data || {}).length === 0 ? (
         <div className="bg-gray-50 rounded-md p-6 text-center text-gray-500">
-          No inbuilt presets found for this camera
+          {t("no_inbuilt_presets_found_for_this_camera")}
         </div>
       ) : (
         <div className="space-y-8">
@@ -57,10 +64,10 @@ export const InbuiltPresets = ({ device }: { device: CameraDevice }) => {
               <TableHeader>
                 <TableRow className="bg-gray-100 border-b border-gray-200">
                   <TableHead className="h-9 py-2 px-4 text-xs font-semibold text-gray-700">
-                    Name
+                    {t("name")}
                   </TableHead>
                   <TableHead className="h-9 py-2 px-4 text-xs font-semibold text-gray-700 text-right">
-                    Actions
+                    {t("actions")}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -89,12 +96,12 @@ export const InbuiltPresets = ({ device }: { device: CameraDevice }) => {
                             disabled={gotoPreset.isPending}
                           >
                             <EyeIcon className="size-3" />
-                            <span className="md:inline">View</span>
+                            <span className="md:inline">{t("view")}</span>
                           </Button>
                         </div>
                       </TableCell>
                     </TableRow>
-                  )
+                  ),
                 )}
               </TableBody>
             </Table>

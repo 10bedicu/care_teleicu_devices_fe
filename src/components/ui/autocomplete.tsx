@@ -16,7 +16,6 @@ import { CardListSkeleton } from "@/components/common/skeleton-loading";
 
 export interface AutocompleteOption {
   id: string;
-  [key: string]: any;
 }
 
 interface AutocompleteProps<T extends AutocompleteOption> {

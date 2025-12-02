@@ -70,6 +70,9 @@ import {
 import { LocationSearch } from "@/components/common/location-search";
 import PluginComponent from "@/components/common/plugin-component";
 import { TableSkeleton } from "@/components/common/skeleton-loading";
+import { Trans } from "@/components/common/trans";
+
+import { useTranslation } from "@/hooks/useTranslation";
 
 import { InbuiltPresets } from "./inbuilt-presets";
 
@@ -90,6 +93,7 @@ export const CameraShowPageCard = ({
 
 const CameraStream = ({ device }: { device: CameraDevice }) => {
   const { data: status, isError, refetch } = useCameraStatus(device);
+  const { t } = useTranslation();
 
   return (
     <CameraFeedProvider device={device}>
@@ -105,15 +109,15 @@ const CameraStream = ({ device }: { device: CameraDevice }) => {
       {!!status && (
         <div className="mt-2 flex flex-wrap gap-2">
           <div className="text-xs bg-gray-100 px-2 py-1 rounded-md flex items-center gap-1.5">
-            <span className="font-medium text-gray-700">Position:</span>
+            <span className="font-medium text-gray-700">{t("position")}:</span>
             <span className="text-gray-600">
-              X: {status.position.x.toFixed(1)}, Y:{" "}
-              {status.position.y.toFixed(1)}, Z:{" "}
+              {t("x")}: {status.position.x.toFixed(1)}, {t("y")}:{" "}
+              {status.position.y.toFixed(1)}, {t("z")}:{" "}
               {status.position.zoom.toFixed(1)}
             </span>
           </div>
           <div className="text-xs bg-gray-100 px-2 py-1 rounded-md flex items-center gap-1.5">
-            <span className="font-medium text-gray-700">Pan/Tilt:</span>
+            <span className="font-medium text-gray-700">{t("pan_tilt")}:</span>
             <span
               className={`${
                 status.moveStatus.panTilt === "MOVING"
@@ -125,7 +129,7 @@ const CameraStream = ({ device }: { device: CameraDevice }) => {
             </span>
           </div>
           <div className="text-xs bg-gray-100 px-2 py-1 rounded-md flex items-center gap-1.5">
-            <span className="font-medium text-gray-700">Zoom:</span>
+            <span className="font-medium text-gray-700">{t("zoom")}:</span>
             <span
               className={`${
                 status.moveStatus.zoom === "MOVING"
@@ -138,7 +142,7 @@ const CameraStream = ({ device }: { device: CameraDevice }) => {
           </div>
           {status.error && (
             <div className="text-xs bg-red-50 text-red-600 px-2 py-1 rounded-md flex items-center gap-1.5">
-              <span className="font-medium">Error:</span>
+              <span className="font-medium">{t("error")}:</span>
               <span>{status.error}</span>
             </div>
           )}
@@ -147,9 +151,9 @@ const CameraStream = ({ device }: { device: CameraDevice }) => {
       {!device.care_metadata.gateway ? (
         <div className="text-xs bg-amber-50 px-3 py-2 rounded-md flex items-center gap-2 border border-amber-200 shadow-sm mt-2">
           <AlertTriangle className="size-4 text-amber-500" />
-          <span className="font-medium text-amber-700">Warning:</span>
+          <span className="font-medium text-amber-700">{t("warning")}</span>
           <span className="text-amber-700 flex-1">
-            No gateway device has been configured for this device.
+            {t("no_gateway_device_configured_for_this_device")}
           </span>
         </div>
       ) : (
@@ -162,6 +166,8 @@ const CameraStream = ({ device }: { device: CameraDevice }) => {
 const CameraCommunicationError = ({ refetch }: { refetch: () => void }) => {
   const { playerStatus } = useCameraFeed();
 
+  const { t } = useTranslation();
+
   if (playerStatus !== "playing") {
     return null;
   }
@@ -169,13 +175,12 @@ const CameraCommunicationError = ({ refetch }: { refetch: () => void }) => {
   return (
     <div className="text-xs bg-amber-50 px-3 py-2 rounded-md flex items-center gap-2 border border-amber-200 shadow-sm mt-2">
       <AlertTriangle className="size-4 text-amber-500" />
-      <span className="font-medium text-amber-700">Warning:</span>
+      <span className="font-medium text-amber-700">{t("warning")}:</span>
       <span className="text-amber-700 flex-1">
-        Unable to communicate with the camera device. The camera credentials may
-        be incorrect.
+        {t("unable_to_communicate_with_the_camera_device")}
       </span>
       <Button variant="warning" size="sm" onClick={() => refetch()}>
-        Retry
+        {t("retry")}
       </Button>
     </div>
   );
@@ -217,6 +222,8 @@ const CameraPositionPresets = ({
   });
 
   const { data: cameraStatus } = useCameraStatus(device);
+
+  const { t } = useTranslation();
 
   const { mutate: createPreset, isPending: isCreatingPreset } = useMutation({
     mutationFn: mutate(cameraPositionPresetApi.create, {
@@ -427,14 +434,14 @@ const CameraPositionPresets = ({
     <div className="mt-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="position">Position Presets</TabsTrigger>
-          <TabsTrigger value="inbuilt">Inbuilt Presets</TabsTrigger>
+          <TabsTrigger value="position">{t("position_presets")}</TabsTrigger>
+          <TabsTrigger value="inbuilt">{t("inbuilt_presets")}</TabsTrigger>
         </TabsList>
 
         {/* Position Presets */}
         <TabsContent value="position">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">Position Presets</h3>
+            <h3 className="text-lg font-medium">{t("position_presets")}</h3>
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -443,21 +450,21 @@ const CameraPositionPresets = ({
                   className="h-8 gap-1 text-xs"
                 >
                   <Plus className="size-3.5" />
-                  Create Preset
+                  {t("create_preset")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-4">
                 <div className="space-y-4">
                   <h4 className="font-medium text-sm">
-                    Save current position as a preset
+                    {t("save_current_position_as_a_preset")}
                   </h4>
                   <div className="space-y-2">
                     <Label htmlFor="preset-name">
-                      Preset Name <span className="text-red-500">*</span>
+                      {t("preset_name")} <span className="text-red-500">*</span>
                     </Label>
                     <Input
                       id="preset-name"
-                      placeholder="Enter preset name"
+                      placeholder={t("enter_preset_name")}
                       value={presetName}
                       onChange={(e) => setPresetName(e.target.value)}
                       className="h-8 text-sm"
@@ -465,7 +472,7 @@ const CameraPositionPresets = ({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="location">
-                      Location <span className="text-red-500">*</span>
+                      {t("location")} <span className="text-red-500">*</span>
                     </Label>
                     <LocationSearch
                       facilityId={facilityId}
@@ -482,7 +489,7 @@ const CameraPositionPresets = ({
                       className="h-8 text-xs"
                       onClick={() => setPopoverOpen(false)}
                     >
-                      Cancel
+                      {t("cancel")}
                     </Button>
                     <Button
                       variant="primary"
@@ -496,7 +503,7 @@ const CameraPositionPresets = ({
                         !cameraStatus
                       }
                     >
-                      Save
+                      {t("save")}
                     </Button>
                   </div>
                 </div>
@@ -506,7 +513,7 @@ const CameraPositionPresets = ({
 
           {data?.results.length === 0 ? (
             <div className="bg-gray-50 rounded-md p-6 text-center text-gray-500">
-              No position presets found for this camera
+              {t("no_position_presets_found_for_this_camera")}
             </div>
           ) : (
             <div className="space-y-8">
@@ -539,16 +546,16 @@ const CameraPositionPresets = ({
                       <TableHeader>
                         <TableRow className="bg-gray-100 border-b border-gray-200">
                           <TableHead className="h-9 py-2 px-4 text-xs font-semibold text-gray-700">
-                            Name
+                            {t("name")}
                           </TableHead>
                           <TableHead className="h-9 py-2 px-4 text-xs font-semibold text-gray-700 hidden md:table-cell">
-                            Position
+                            {t("position")}
                           </TableHead>
                           <TableHead className="h-9 py-2 px-4 text-xs font-semibold text-gray-700 text-right">
-                            Actions
+                            {t("actions")}
                           </TableHead>
                           <TableHead className="h-9 py-2 px-4 text-xs font-semibold text-gray-700">
-                            <span className="sr-only">Move</span>
+                            <span className="sr-only">{t("move")}</span>
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -571,7 +578,7 @@ const CameraPositionPresets = ({
                               <div className="flex items-center space-x-3">
                                 <div className="flex items-center space-x-1">
                                   <span className="text-xs font-medium text-gray-500">
-                                    X:
+                                    {t("x")}:
                                   </span>
                                   <span className="text-xs text-gray-700">
                                     {preset.ptz.x.toFixed(1)}
@@ -866,20 +873,28 @@ const CameraPositionPresets = ({
           >
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Delete Position Preset</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {t("delete_position_preset")}
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Are you sure you want to delete the preset "
-                  {presetToDelete?.name}
-                  "? This action cannot be undone.
+                  <Trans
+                    i18nKey="delete_preset_confirmation"
+                    values={{
+                      preset_name: presetToDelete?.name,
+                    }}
+                    components={{
+                      strong: <strong className="font-semibold" />,
+                    }}
+                  />
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={confirmDeletePreset}
                   className={buttonVariants({ variant: "destructive" })}
                 >
-                  Delete
+                  {t("delete")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

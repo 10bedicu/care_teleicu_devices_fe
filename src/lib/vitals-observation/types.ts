@@ -62,6 +62,7 @@ export interface VitalsObservationDevice extends DeviceList {
       care_type: "gateway";
       care_metadata: {
         endpoint_address: string;
+        insecure: boolean;
       };
     } | null;
   };

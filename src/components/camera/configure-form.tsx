@@ -17,6 +17,8 @@ import {
 
 import PluginComponent from "@/components/common/plugin-component";
 
+import { useTranslation } from "@/hooks/useTranslation";
+
 export const CameraDeviceConfigureForm = ({
   facilityId,
   metadata,
@@ -28,20 +30,25 @@ export const CameraDeviceConfigureForm = ({
   });
 
   const [showPassword, setShowPassword] = useState(false);
+  const { t } = useTranslation();
 
   const gatewayId =
     (typeof metadata.gateway === "object" && metadata.gateway?.id) ||
     metadata.gateway;
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = (key: string, value: unknown) => {
     onChange({ ...metadata, gateway: gatewayId, [key]: value });
   };
 
-  useEffect(() => {
-    if (gatewayId) {
-      handleChange("gateway", gatewayId);
-    }
-  }, [gatewayId]);
+  useEffect(
+    () => {
+      if (gatewayId) {
+        handleChange("gateway", gatewayId);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gatewayId],
+  );
 
   const gatewayDevices = data?.results ?? [];
   const gateway = gatewayDevices.find((device) => device.id === gatewayId);
@@ -50,13 +57,13 @@ export const CameraDeviceConfigureForm = ({
     <PluginComponent>
       <div className="space-y-4">
         <div>
-          <Label className="mb-2">Type</Label>
+          <Label className="mb-2">{t("type")}</Label>
           <Select
             value={metadata.type}
             onValueChange={(value) => handleChange("type", value)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select device type..." />
+              <SelectValue placeholder={t("select_device_type")} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ONVIF">ONVIF</SelectItem>
@@ -65,16 +72,16 @@ export const CameraDeviceConfigureForm = ({
         </div>
 
         <div>
-          <Label className="mb-2">Gateway Device</Label>
+          <Label className="mb-2">{t("gateway_device")}</Label>
           <Select
             value={gatewayId}
             onValueChange={(value) => handleChange("gateway", value)}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select gateway device...">
+              <SelectValue placeholder={t("select_gateway_device")}>
                 {gateway?.registered_name || gateway?.user_friendly_name}{" "}
                 <span className="text-gray-500">
-                  (Endpoint Address:{" "}
+                  ({t("endpoint_address")}:{" "}
                   {(gateway?.care_metadata.endpoint_address as string) || "--"})
                 </span>
               </SelectValue>
@@ -86,7 +93,7 @@ export const CameraDeviceConfigureForm = ({
                 </div>
               ) : gatewayDevices.length === 0 ? (
                 <div className="px-2 py-1.5 text-sm text-gray-500">
-                  No gateway devices found
+                  {t("no_gateway_devices_found")}
                 </div>
               ) : (
                 gatewayDevices.map((device) => (
@@ -95,7 +102,7 @@ export const CameraDeviceConfigureForm = ({
                       {device.registered_name || device.user_friendly_name}
                     </p>
                     <p className="text-xs text-gray-500">
-                      Endpoint Address:{" "}
+                      {t("endpoint_address")}:{" "}
                       <span className="font-medium">
                         {(device.care_metadata.endpoint_address as string) ||
                           "--"}
@@ -109,19 +116,19 @@ export const CameraDeviceConfigureForm = ({
         </div>
 
         <div>
-          <Label className="mb-2">Endpoint Address</Label>
+          <Label className="mb-2">{t("endpoint_address")}</Label>
           <Input
             type="text"
-            placeholder="Camera's endpoint address (e.g., 192.168.1.100)"
+            placeholder={t("camera_endpoint_address")}
             value={metadata.endpoint_address || ""}
             onChange={(e) => handleChange("endpoint_address", e.target.value)}
           />
         </div>
 
         <div>
-          <Label className="mb-2">Username</Label>
+          <Label className="mb-2">{t("username")}</Label>
           <Input
-            placeholder="Camera username"
+            placeholder={t("camera_username")}
             autoComplete="off"
             value={metadata.username || ""}
             onChange={(e) => handleChange("username", e.target.value)}
@@ -129,12 +136,12 @@ export const CameraDeviceConfigureForm = ({
         </div>
 
         <div>
-          <Label className="mb-2">Password</Label>
+          <Label className="mb-2">{t("password")}</Label>
           <div className="relative">
             <Input
               type={showPassword ? "text" : "password"}
               autoComplete="off"
-              placeholder="Camera password"
+              placeholder={t("camera_password")}
               value={metadata.password || ""}
               onChange={(e) => handleChange("password", e.target.value)}
               className="pr-10"
@@ -158,9 +165,9 @@ export const CameraDeviceConfigureForm = ({
         </div>
 
         <div>
-          <Label className="mb-2">Stream ID</Label>
+          <Label className="mb-2">{t("stream_id")}</Label>
           <Input
-            placeholder="Camera stream ID"
+            placeholder={t("camera_stream_id")}
             autoComplete="off"
             value={metadata.stream_id || ""}
             onChange={(e) => handleChange("stream_id", e.target.value)}
