@@ -14,6 +14,8 @@ export type UserBase = {
   profile_picture_url: string;
   phone_number: string;
   mfa_enabled: boolean;
+  permissions: string[];
+  is_superuser: boolean;
 };
 
 export const ContactPointSystems = [
