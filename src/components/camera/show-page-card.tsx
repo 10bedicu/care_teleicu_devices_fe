@@ -13,7 +13,6 @@ import {
 import { AlertTriangle } from "lucide-react";
 import { Link } from "raviger";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import {
   CameraFeedProvider,
@@ -265,9 +264,9 @@ const CameraPositionPresets = ({
       });
 
       // Show success toast
-      toast.success("Preset deleted", {
-        description: `The preset "${presetToDelete?.name}" was successfully deleted.`,
-      });
+      // toast.success("Preset deleted", {
+      //   description: `The preset "${presetToDelete?.name}" was successfully deleted.`,
+      // });
 
       setPresetToDelete(null);
     },
@@ -286,9 +285,9 @@ const CameraPositionPresets = ({
       });
 
       // Show success toast
-      toast.success("Camera moved", {
-        description: "Camera has been moved to the selected preset position.",
-      });
+      // toast.success("Camera moved", {
+      //   description: "Camera has been moved to the selected preset position.",
+      // });
     },
   });
 
@@ -310,9 +309,9 @@ const CameraPositionPresets = ({
       setEditPopoverOpen(false);
 
       // Show success toast
-      toast.success("Preset updated", {
-        description: `The preset "${presetToEdit?.name}" was successfully updated.`,
-      });
+      // toast.success("Preset updated", {
+      //   description: `The preset "${presetToEdit?.name}" was successfully updated.`,
+      // });
     },
   });
 
