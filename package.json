@@ -76,12 +76,6 @@
     "typescript": "^5.8.3",
     "vite": "^6.3.4"
   },
-  "optionalDependencies": {
-    "@esbuild/linux-arm64": "latest",
-    "@esbuild/linux-x64": "latest",
-    "@rollup/rollup-linux-arm64-gnu": "4.53.3",
-    "@rollup/rollup-linux-x64-gnu": "4.53.2"
-  },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
       "prettier --write --ignore-unknown --plugin prettier-plugin-tailwindcss --plugin @trivago/prettier-plugin-sort-imports",
