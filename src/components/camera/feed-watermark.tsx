@@ -1,7 +1,6 @@
-import { useAtomValue } from "jotai";
 import { useEffect, useRef } from "react";
 
-import { authUserAtom } from "@/state/user-atom";
+import useAuthUser from "@/state/use-Auth";
 
 const CONTAINER_CLASS = "absolute inset-0 pointer-events-none select-none";
 const WATERMARK_CLASS = "absolute z-10 font-semibold text-white/20 md:text-2xl";
@@ -11,7 +10,7 @@ const WATERMARK2_POSITION =
   "bottom-1/3 right-1/3 translate-x-1/2 translate-y-1/2";
 
 export const CameraFeedWatermark = () => {
-  const authUser = useAtomValue(authUserAtom);
+  const authUser = useAuthUser();
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -75,6 +75,8 @@ import { Trans } from "@/components/common/trans";
 
 import { useTranslation } from "@/hooks/useTranslation";
 
+import useAuthUser from "@/state/use-Auth";
+
 import { InbuiltPresets } from "./inbuilt-presets";
 
 export const CameraShowPageCard = ({
@@ -84,10 +86,19 @@ export const CameraShowPageCard = ({
   device: CameraDevice;
   facilityId: string;
 }) => {
+  const authUser = useAuthUser();
   return (
     <PluginComponent>
-      <CameraStream device={device} />
-      <CameraPositionPresets device={device} facilityId={facilityId} />
+      {(authUser.permissions.includes("can_view_camera_stream") ||
+        authUser.is_superuser) && (
+        <>
+          <CameraStream device={device} />
+          {(authUser.permissions.includes("can_control_camera_ptz") ||
+            authUser.is_superuser) && (
+            <CameraPositionPresets device={device} facilityId={facilityId} />
+          )}
+        </>
+      )}
     </PluginComponent>
   );
 };

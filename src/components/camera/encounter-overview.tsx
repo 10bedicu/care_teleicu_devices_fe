@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import PluginComponent from "@/components/common/plugin-component";
 
+import useAuthUser from "@/state/use-Auth";
+
 import { PresetDropdown } from "./preset-dropdown";
 
 interface Props {
@@ -25,7 +27,7 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
   const [activeCamera, setActiveCamera] = useState<string>();
   const [selectedPreset, setSelectedPreset] = useState<PositionPreset>();
   const [isAwayFromPreset, setIsAwayFromPreset] = useState(false);
-
+  const authUser = useAuthUser();
   const { data: cameras, isLoading } = useQuery({
     queryKey: ["camera-devices", encounter.id],
     queryFn: query(camerasOfPresetLocationApi.list, {
@@ -94,6 +96,12 @@ export const CameraEncounterOverview = ({ encounter }: Props) => {
   };
 
   if (isLoading || !cameras) {
+    return null;
+  }
+  if (
+    !authUser.is_superuser &&
+    !authUser.permissions.includes("can_view_camera_stream")
+  ) {
     return null;
   }
 
