@@ -24,7 +24,11 @@ interface Props {
 export const VitalsObservationEncounterOverview = ({ encounter }: Props) => {
   const { data: encounterDevices, isLoading: isLoadingEncounterDevices } =
     useQuery({
-      queryKey: ["encounter-vitals-observation-devices", encounter.id],
+      queryKey: [
+        "encounter-vitals-observation-devices",
+        encounter.id,
+        encounter.current_location?.id,
+      ],
       queryFn: query(deviceApi.listDevices, {
         pathParams: { facilityId: encounter.facility.id },
         queryParams: {
@@ -38,7 +42,11 @@ export const VitalsObservationEncounterOverview = ({ encounter }: Props) => {
 
   const { data: locationDevices, isLoading: isLoadingLocationDevices } =
     useQuery({
-      queryKey: ["location-vitals-observation-devices", encounter.facility.id],
+      queryKey: [
+        "location-vitals-observation-devices",
+        encounter.facility.id,
+        encounter.current_location?.id,
+      ],
       queryFn: query(deviceApi.listDevices, {
         pathParams: { facilityId: encounter.facility.id },
         queryParams: {
