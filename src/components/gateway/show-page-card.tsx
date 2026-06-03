@@ -59,12 +59,10 @@ export const GatewayShowPageCard = ({ device }: Props) => {
 
   useEffect(
     () => {
-      if (!isMonitoring) {
-        startMonitoring();
-      }
+      startMonitoring();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [isMonitoring],
+    [],
   );
 
   const getConnectionStatus = (): ConnectionStatus => {
@@ -178,7 +176,6 @@ export const GatewayShowPageCard = ({ device }: Props) => {
                     variant="outline"
                     size="sm"
                     onClick={isMonitoring ? stopMonitoring : startMonitoring}
-                    disabled={getConnectionStatus() !== "connected"}
                   >
                     {isMonitoring ? (
                       <>

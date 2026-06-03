@@ -3,7 +3,11 @@ import { ContactPoint, UserBase } from "@/lib/types/common";
 import { Encounter } from "@/lib/types/encounter";
 import { LocationList } from "@/lib/types/location";
 
-export type DeviceType = "gateway" | "camera" | "vitals-observation";
+export type DeviceType =
+  | "gateway"
+  | "camera"
+  | "vitals-observation"
+  | "lab-analyzer";
 
 export const DeviceStatuses = [
   "active",
