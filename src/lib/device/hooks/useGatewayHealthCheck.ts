@@ -37,6 +37,7 @@ export interface GatewayHealthCheckResult {
 
 export const useGatewayHealthCheck = (
   endpointAddress: string,
+  insecure = false,
 ): GatewayHealthCheckResult => {
   const [isMonitoring, setIsMonitoring] = useState(false);
   const [pingHistory, setPingHistory] = useState<PingDataPoint[]>([]);
@@ -110,10 +111,11 @@ export const useGatewayHealthCheck = (
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["gateway-health", endpointAddress],
+    queryKey: ["gateway-health", endpointAddress, insecure],
     queryFn: async () => {
       const startTime = performance.now();
-      const url = `https://${endpointAddress}/health/status`;
+      const protocol = insecure ? "http" : "https";
+      const url = `${protocol}://${endpointAddress}/health/status`;
 
       const response = await fetch(url, {
         method: "GET",

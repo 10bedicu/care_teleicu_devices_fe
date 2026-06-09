@@ -12,6 +12,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 
 import { NetworkMetrics } from "@/components/common/network-metrics";
 import PluginComponent from "@/components/common/plugin-component";
@@ -30,6 +31,10 @@ export const GatewayDeviceConfigureForm = ({
 
   const { t } = useTranslation();
 
+  const jwksUrlPlaceholder = metadata.endpoint_address
+    ? `${metadata.insecure ? "http" : "https"}://${metadata.endpoint_address}/openid-configuration/`
+    : "https://{endpoint_address}/openid-configuration/";
+
   const {
     healthData,
     isLoading,
@@ -38,7 +43,10 @@ export const GatewayDeviceConfigureForm = ({
     startMonitoring,
     stopMonitoring,
     resetMetrics,
-  } = useGatewayHealthCheck(metadata.endpoint_address || "");
+  } = useGatewayHealthCheck(
+    metadata.endpoint_address || "",
+    metadata.insecure ?? false,
+  );
 
   // Auto-open popover when test completes
   useEffect(() => {
@@ -237,6 +245,44 @@ export const GatewayDeviceConfigureForm = ({
               </Button>
             </div>
           </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <Label htmlFor="gateway-insecure">{t("gateway_insecure")}</Label>
+            <p className="text-sm text-gray-500">
+              {t("gateway_insecure_description")}
+            </p>
+          </div>
+          <Switch
+            id="gateway-insecure"
+            checked={metadata.insecure ?? false}
+            onCheckedChange={(checked) => {
+              onChange({
+                ...metadata,
+                insecure: checked,
+              });
+              stopMonitoring();
+            }}
+          />
+        </div>
+
+        <div>
+          <Label className="mb-2">{t("gateway_jwks_url")}</Label>
+          <p className="mb-2 text-sm text-gray-500">
+            {t("gateway_jwks_url_description")}
+          </p>
+          <Input
+            autoComplete="off"
+            placeholder={jwksUrlPlaceholder}
+            value={metadata.jwks_url ?? ""}
+            onChange={(e) => {
+              onChange({
+                ...metadata,
+                jwks_url: e.target.value || undefined,
+              });
+            }}
+          />
         </div>
       </div>
     </PluginComponent>

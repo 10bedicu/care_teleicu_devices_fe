@@ -5,5 +5,7 @@ export interface LinkedGateway {
   care_type: "gateway";
   care_metadata: {
     endpoint_address: string;
+    insecure?: boolean;
+    jwks_url?: string;
   };
 }
