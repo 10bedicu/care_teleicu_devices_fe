@@ -41,6 +41,7 @@
     "raviger": "^5.0.0-2",
     "react-i18next": "^15.4.1",
     "recharts": "^2.15.2",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.2.0",
     "use-keyboard-shortcut": "^1.1.6"
   },
@@ -75,6 +76,12 @@
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.4"
+  },
+  "optionalDependencies": {
+    "@esbuild/linux-arm64": "latest",
+    "@esbuild/linux-x64": "latest",
+    "@rollup/rollup-linux-arm64-gnu": "4.53.3",
+    "@rollup/rollup-linux-x64-gnu": "4.53.2"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
