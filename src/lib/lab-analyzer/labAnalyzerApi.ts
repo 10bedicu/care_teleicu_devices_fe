@@ -48,6 +48,7 @@ export interface LoincMappingEntry {
 
 export type CommunicationMode = "unidirectional" | "host_query" | "download";
 export type Hl7ConnectionMode = "inbound" | "outbound";
+export type AstmConnectionMode = "inbound" | "outbound";
 
 export type LabAnalyzerTransport = "ethernet" | "serial";
 export type LabAnalyzerProtocol = "hl7" | "astm";
@@ -58,7 +59,13 @@ export interface LabAnalyzerDeviceType {
   hl7_version: string;
   communication_mode: CommunicationMode;
   hl7_connection_mode?: Hl7ConnectionMode;
+  astm_connection_mode?: AstmConnectionMode;
   default_oru_port?: number;
+  default_baud_rate?: number;
+  default_data_bits?: number;
+  default_parity?: string;
+  default_stop_bits?: number;
+  default_flow_control?: string;
   supports_query_orders: boolean;
   supported_protocols?: LabAnalyzerProtocol[];
   panel_mappings: Record<string, string | string[]>;

@@ -27,6 +27,7 @@ interface Props {
       endpoint_address?: string | null;
       oru_port?: number | null;
       hl7_connection_mode?: "inbound" | "outbound";
+      astm_connection_mode?: "inbound" | "outbound";
       orm_mode?: string | null;
       orm_port?: number | null;
       serial_port?: string | null;
@@ -122,6 +123,18 @@ export const LabAnalyzerShowPageCard = ({ device, facilityId }: Props) => {
                         </p>
                       </div>
                     )}
+                    {meta.protocol === "astm" && (
+                      <div>
+                        <span className="font-medium text-gray-500 dark:text-gray-400">
+                          {t("lab_analyzer_astm_connection_mode")}
+                        </span>
+                        <p className="text-sm">
+                          {meta.astm_connection_mode === "outbound"
+                            ? t("lab_analyzer_astm_connection_mode_outbound")
+                            : t("lab_analyzer_astm_connection_mode_inbound")}
+                        </p>
+                      </div>
+                    )}
                     <div>
                       <span className="font-medium text-gray-500 dark:text-gray-400">
                         {t("endpoint_address")}
@@ -130,7 +143,10 @@ export const LabAnalyzerShowPageCard = ({ device, facilityId }: Props) => {
                     </div>
                     <div>
                       <span className="font-medium text-gray-500 dark:text-gray-400">
-                        {meta.hl7_connection_mode === "outbound"
+                        {(meta.protocol === "hl7" &&
+                          meta.hl7_connection_mode === "outbound") ||
+                        (meta.protocol === "astm" &&
+                          meta.astm_connection_mode === "outbound")
                           ? t("lab_analyzer_analyzer_mllp_port")
                           : t("lab_analyzer_oru_port")}
                       </span>

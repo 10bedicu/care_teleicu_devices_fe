@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import useDevices from "@/lib/device/hooks/useDevices";
 import useLabAnalyzerDeviceTypes from "@/lib/lab-analyzer/hooks/useLabAnalyzerDeviceTypes";
+import { LabAnalyzerDeviceType } from "@/lib/lab-analyzer/labAnalyzerApi";
 import { ConfigureFormProps } from "@/lib/types/common";
 
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,40 @@ import {
 
 import { useTranslation } from "@/hooks/useTranslation";
 
+function serialDefaultsFromDeviceType(
+  deviceType: LabAnalyzerDeviceType | undefined,
+): Record<string, unknown> {
+  return {
+    baud_rate: deviceType?.default_baud_rate ?? 9600,
+    data_bits: deviceType?.default_data_bits ?? 8,
+    parity: deviceType?.default_parity ?? "N",
+    stop_bits: deviceType?.default_stop_bits ?? 1,
+    flow_control: deviceType?.default_flow_control ?? "none",
+  };
+}
+
+function defaultProtocolForDeviceType(
+  deviceType: LabAnalyzerDeviceType | undefined,
+): "hl7" | "astm" {
+  const supported = deviceType?.supported_protocols ?? ["hl7"];
+  return supported.includes("hl7") ? "hl7" : "astm";
+}
+
+function resolveProtocol(
+  metadataProtocol: unknown,
+  deviceType: LabAnalyzerDeviceType | undefined,
+): "hl7" | "astm" {
+  const supported = deviceType?.supported_protocols ?? ["hl7"];
+  if (
+    typeof metadataProtocol === "string" &&
+    (metadataProtocol === "hl7" || metadataProtocol === "astm") &&
+    supported.includes(metadataProtocol)
+  ) {
+    return metadataProtocol;
+  }
+  return defaultProtocolForDeviceType(deviceType);
+}
+
 export const LabAnalyzerConfigureForm = ({
   facilityId,
   metadata,
@@ -32,7 +67,8 @@ export const LabAnalyzerConfigureForm = ({
     careType: "gateway",
   });
 
-  const { data: deviceTypesData } = useLabAnalyzerDeviceTypes();
+  const { data: deviceTypesData, isLoading: deviceTypesLoading } =
+    useLabAnalyzerDeviceTypes();
   const deviceTypes = deviceTypesData?.results ?? [];
 
   const gatewayId =
@@ -59,20 +95,70 @@ export const LabAnalyzerConfigureForm = ({
   const gateway = gatewayDevices.find((device) => device.id === gatewayId);
 
   const selectedDeviceType = deviceTypes.find((dt) => dt.id === metadata.type);
+
+  // Keep protocol aligned with the selected device profile once metadata loads.
+  useEffect(() => {
+    if (!selectedDeviceType) {
+      return;
+    }
+
+    const supported = selectedDeviceType.supported_protocols ?? ["hl7"];
+    const resolved = resolveProtocol(metadata.protocol, selectedDeviceType);
+    const updates: Record<string, unknown> = {};
+
+    if (
+      typeof metadata.protocol !== "string" ||
+      !supported.includes(metadata.protocol)
+    ) {
+      updates.protocol = resolved;
+    }
+
+    if (resolved === "astm") {
+      const profileAstmMode = selectedDeviceType.astm_connection_mode;
+      if (
+        profileAstmMode &&
+        metadata.astm_connection_mode !== profileAstmMode
+      ) {
+        updates.astm_connection_mode = profileAstmMode;
+      }
+      if (metadata.oru_port == null || metadata.oru_port === 2575) {
+        updates.oru_port = selectedDeviceType.default_oru_port ?? 2575;
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return;
+    }
+
+    onChange({ ...metadata, gateway: gatewayId, ...updates });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDeviceType?.id, metadata.protocol]);
   const isUnidirectional =
     selectedDeviceType?.communication_mode === "unidirectional";
   const transport = metadata.transport || "ethernet";
-  const protocol = metadata.protocol || "hl7";
   const isSerial = transport === "serial";
-  const supportedProtocols = selectedDeviceType?.supported_protocols ?? ["hl7"];
+  const supportedProtocols = selectedDeviceType?.supported_protocols ?? [
+    "hl7",
+    "astm",
+  ];
+  const protocol = resolveProtocol(metadata.protocol, selectedDeviceType);
   const hl7ConnectionMode =
     metadata.hl7_connection_mode ??
     selectedDeviceType?.hl7_connection_mode ??
     "inbound";
+  const astmConnectionMode =
+    metadata.astm_connection_mode ??
+    selectedDeviceType?.astm_connection_mode ??
+    "outbound";
   const isOutboundHl7 =
     !isSerial && protocol === "hl7" && hl7ConnectionMode === "outbound";
+  const isInboundAstm =
+    !isSerial && protocol === "astm" && astmConnectionMode === "inbound";
+  const isOutboundAstm =
+    !isSerial && protocol === "astm" && astmConnectionMode === "outbound";
   const defaultOruPort = selectedDeviceType?.default_oru_port ?? 2575;
-  const showOrmMode = !isSerial && !isUnidirectional && !isOutboundHl7;
+  const showOrmMode =
+    !isSerial && !isUnidirectional && !isOutboundHl7 && !isOutboundAstm;
   const showOrmPort =
     showOrmMode &&
     (metadata.orm_mode === "client" || metadata.orm_mode === "server");
@@ -86,17 +172,26 @@ export const LabAnalyzerConfigureForm = ({
             <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={metadata.type || ""}
+            value={
+              typeof metadata.type === "string" && metadata.type
+                ? metadata.type
+                : undefined
+            }
             onValueChange={(value) => {
               const deviceType = deviceTypes.find((dt) => dt.id === value);
+              const defaultProtocol = defaultProtocolForDeviceType(deviceType);
               const connectionMode =
                 deviceType?.hl7_connection_mode ?? "inbound";
+              const astmMode = deviceType?.astm_connection_mode ?? "outbound";
               const updates: Record<string, unknown> = {
                 type: value,
+                protocol: defaultProtocol,
                 hl7_connection_mode: connectionMode,
+                astm_connection_mode: astmMode,
                 oru_port: deviceType?.default_oru_port ?? 2575,
+                ...serialDefaultsFromDeviceType(deviceType),
               };
-              if (connectionMode === "outbound") {
+              if (connectionMode === "outbound" || defaultProtocol === "astm") {
                 updates.orm_mode = "shared";
                 updates.orm_port = null;
               }
@@ -107,44 +202,83 @@ export const LabAnalyzerConfigureForm = ({
               <SelectValue placeholder={t("select_device_type")} />
             </SelectTrigger>
             <SelectContent>
-              {deviceTypes.map((type) => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
-                </SelectItem>
-              ))}
+              {deviceTypesLoading ? (
+                <div className="px-2 py-1.5 text-sm text-gray-500">
+                  {t("loading")}
+                </div>
+              ) : deviceTypes.length === 0 ? (
+                <div className="px-2 py-1.5 text-sm text-gray-500">
+                  {t("no_device_types_found")}
+                </div>
+              ) : (
+                deviceTypes.map((type) => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))
+              )}
             </SelectContent>
           </Select>
         </div>
 
-        <div>
-          <Label className="mb-2">{t("lab_analyzer_protocol")}</Label>
-          <Select
-            value={protocol}
-            onValueChange={(value) => handleChange("protocol", value)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {supportedProtocols.includes("hl7") && (
-                <SelectItem value="hl7">
-                  {t("lab_analyzer_protocol_hl7")}
-                </SelectItem>
-              )}
-              {supportedProtocols.includes("astm") && (
-                <SelectItem value="astm">
-                  {t("lab_analyzer_protocol_astm")}
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+        {metadata.type && (
+          <div>
+            <Label className="mb-2">{t("lab_analyzer_protocol")}</Label>
+            <Select
+              value={protocol}
+              onValueChange={(value) => {
+                const updates: Record<string, unknown> = { protocol: value };
+                if (value === "astm" && selectedDeviceType) {
+                  updates.astm_connection_mode =
+                    selectedDeviceType.astm_connection_mode ?? "outbound";
+                  updates.oru_port =
+                    selectedDeviceType.default_oru_port ?? 2575;
+                  updates.orm_mode = "shared";
+                  updates.orm_port = null;
+                }
+                if (value === "hl7" && selectedDeviceType) {
+                  updates.hl7_connection_mode =
+                    selectedDeviceType.hl7_connection_mode ?? "inbound";
+                  updates.oru_port =
+                    selectedDeviceType.default_oru_port ?? 2575;
+                }
+                onChange({ ...metadata, gateway: gatewayId, ...updates });
+              }}
+              disabled={supportedProtocols.length === 1}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {supportedProtocols.includes("hl7") && (
+                  <SelectItem value="hl7">
+                    {t("lab_analyzer_protocol_hl7")}
+                  </SelectItem>
+                )}
+                {supportedProtocols.includes("astm") && (
+                  <SelectItem value="astm">
+                    {t("lab_analyzer_protocol_astm")}
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div>
           <Label className="mb-2">{t("lab_analyzer_transport")}</Label>
           <Select
             value={transport}
-            onValueChange={(value) => handleChange("transport", value)}
+            onValueChange={(value) => {
+              const updates: Record<string, unknown> = { transport: value };
+              if (value === "serial") {
+                Object.assign(
+                  updates,
+                  serialDefaultsFromDeviceType(selectedDeviceType),
+                );
+              }
+              onChange({ ...metadata, gateway: gatewayId, ...updates });
+            }}
           >
             <SelectTrigger className="w-full">
               <SelectValue />
@@ -166,7 +300,9 @@ export const LabAnalyzerConfigureForm = ({
             <span className="text-red-500">*</span>
           </Label>
           <Select
-            value={gatewayId}
+            value={
+              typeof gatewayId === "string" && gatewayId ? gatewayId : undefined
+            }
             onValueChange={(value) => handleChange("gateway", value)}
           >
             <SelectTrigger className="w-full">
@@ -206,6 +342,47 @@ export const LabAnalyzerConfigureForm = ({
             </SelectContent>
           </Select>
         </div>
+
+        {!isSerial && protocol === "astm" && (
+          <div>
+            <Label className="mb-2">
+              {t("lab_analyzer_astm_connection_mode")}
+            </Label>
+            <Select
+              value={astmConnectionMode}
+              onValueChange={(value) => {
+                onChange({
+                  ...metadata,
+                  gateway: gatewayId,
+                  astm_connection_mode: value,
+                });
+              }}
+              disabled={selectedDeviceType?.astm_connection_mode === "inbound"}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="inbound">
+                  {t("lab_analyzer_astm_connection_mode_inbound")}
+                </SelectItem>
+                <SelectItem value="outbound">
+                  {t("lab_analyzer_astm_connection_mode_outbound")}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            {isInboundAstm && (
+              <p className="mt-1.5 text-xs text-gray-500">
+                {t("lab_analyzer_inbound_astm_connection_help")}
+              </p>
+            )}
+            {isOutboundAstm && (
+              <p className="mt-1.5 text-xs text-gray-500">
+                {t("lab_analyzer_outbound_astm_connection_help")}
+              </p>
+            )}
+          </div>
+        )}
 
         {!isSerial && protocol === "hl7" && (
           <div>
@@ -255,7 +432,7 @@ export const LabAnalyzerConfigureForm = ({
             <Input
               type="text"
               placeholder={
-                isOutboundHl7
+                isOutboundHl7 || isOutboundAstm
                   ? t("lab_analyzer_analyzer_ip_placeholder")
                   : t("lab_analyzer_endpoint_address_placeholder")
               }
@@ -268,7 +445,7 @@ export const LabAnalyzerConfigureForm = ({
         {!isSerial && (
           <div>
             <Label className="mb-2">
-              {isOutboundHl7
+              {isOutboundHl7 || isOutboundAstm
                 ? t("lab_analyzer_analyzer_mllp_port")
                 : t("lab_analyzer_oru_port")}
             </Label>
