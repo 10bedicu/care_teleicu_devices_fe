@@ -23,6 +23,12 @@ import {
 
 import { useTranslation } from "@/hooks/useTranslation";
 
+const getDeviceIdFromLocation = (): string | undefined => {
+  const match = window.location.pathname.match(/\/devices\/([^/]+)/);
+  const id = match?.[1];
+  return id && id !== "create" ? id : undefined;
+};
+
 function serialDefaultsFromDeviceType(
   deviceType: LabAnalyzerDeviceType | undefined,
 ): Record<string, unknown> {
@@ -80,6 +86,7 @@ export const LabAnalyzerConfigureForm = ({
   };
 
   const { t } = useTranslation();
+  const deviceId = getDeviceIdFromLocation();
 
   useEffect(
     () => {
@@ -639,6 +646,7 @@ export const LabAnalyzerConfigureForm = ({
         {metadata.type && (
           <PanelMappingsEditor
             deviceType={metadata.type}
+            deviceId={deviceId}
             panelMappings={metadata.panel_mappings ?? null}
             onChange={(mappings) => handleChange("panel_mappings", mappings)}
           />

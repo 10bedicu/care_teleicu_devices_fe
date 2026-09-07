@@ -1,7 +1,7 @@
 import { HttpMethod, apiRoutes } from "@/lib/request";
 
 export interface LabMessage {
-  external_id: string;
+  id: string;
   device_id: string;
   patient_id: string | null;
   encounter_id: string | null;

@@ -1,7 +1,10 @@
-import { Plus, Search, Trash2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, Plus, Search, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import useLabAnalyzerDeviceTypes from "@/lib/lab-analyzer/hooks/useLabAnalyzerDeviceTypes";
+import labAnalyzerApi from "@/lib/lab-analyzer/labAnalyzerApi";
+import { query } from "@/lib/request";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ComboboxInput } from "@/components/ui/combobox-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -33,6 +37,89 @@ interface Props {
   > | null;
 }
 
+function findDeviceProfile<T extends { id: string; name: string }>(
+  deviceTypes: T[] | undefined,
+  deviceType: string,
+): T | undefined {
+  return deviceTypes?.find(
+    (dt) => dt.name === deviceType || dt.id === deviceType,
+  );
+}
+
+function uniqueDevicePanelCodes(
+  panelMappings: Record<string, string | string[]> | undefined,
+): string[] {
+  return [
+    ...new Set(
+      Object.values(panelMappings ?? {}).flatMap((v) =>
+        Array.isArray(v) ? v : [v],
+      ),
+    ),
+  ].sort();
+}
+
+interface SuggestInputProps {
+  value: string;
+  onChange: (value: string) => void;
+  suggestions: string[];
+  placeholder?: string;
+  className?: string;
+}
+
+/** Free-text input with suggestions, using care_fe's ComboboxInput pattern. */
+function SuggestInput({
+  value,
+  onChange,
+  suggestions,
+  placeholder,
+  className,
+}: SuggestInputProps) {
+  const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
+
+  const filtered = useMemo(() => {
+    const query = value.trim().toLowerCase();
+    if (!query) return suggestions;
+    return suggestions.filter((s) => s.toLowerCase().includes(query));
+  }, [suggestions, value]);
+
+  return (
+    <ComboboxInput
+      value={value}
+      onValueChange={(next) => {
+        onChange(next);
+        setOpen(true);
+      }}
+      open={open}
+      onOpenChange={setOpen}
+      placeholder={placeholder}
+      className={className}
+    >
+      <div className="max-h-48 overflow-y-auto py-1">
+        {filtered.length === 0 ? (
+          <div className="px-3 py-2 text-xs text-gray-500">
+            {t("no_results_found")}
+          </div>
+        ) : (
+          filtered.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              className="flex w-full items-center px-3 py-1.5 text-left font-mono text-xs hover:bg-gray-100 cursor-pointer"
+              onClick={() => {
+                onChange(suggestion);
+                setOpen(false);
+              }}
+            >
+              {suggestion}
+            </button>
+          ))
+        )}
+      </div>
+    </ComboboxInput>
+  );
+}
+
 export const PanelMappingsCard = ({
   deviceType,
   panelMappingsOverride,
@@ -41,9 +128,10 @@ export const PanelMappingsCard = ({
   const { t } = useTranslation();
   const { data: deviceTypesData } = useLabAnalyzerDeviceTypes();
   const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   const profile = useMemo(() => {
-    return deviceTypesData?.results?.find((dt) => dt.name === deviceType);
+    return findDeviceProfile(deviceTypesData?.results, deviceType);
   }, [deviceTypesData, deviceType]);
 
   const panelMappings = useMemo(() => {
@@ -52,15 +140,15 @@ export const PanelMappingsCard = ({
     const merged = { ...base, ...overrides };
 
     return Object.entries(merged)
-      .map(([loincCode, panelCode]) => ({
-        loincCode,
+      .map(([orderCode, panelCode]) => ({
+        orderCode,
         panelCodes: Array.isArray(panelCode) ? panelCode : [panelCode],
-        isOverride: loincCode in overrides,
+        isOverride: orderCode in overrides,
       }))
       .filter(
         (entry) =>
           !search ||
-          entry.loincCode.toLowerCase().includes(search.toLowerCase()) ||
+          entry.orderCode.toLowerCase().includes(search.toLowerCase()) ||
           entry.panelCodes.some((c) =>
             c.toLowerCase().includes(search.toLowerCase()),
           ),
@@ -107,11 +195,20 @@ export const PanelMappingsCard = ({
     (panelMappingsOverride && Object.keys(panelMappingsOverride).length > 0) ||
     (codeMappingsOverride && Object.keys(codeMappingsOverride).length > 0);
 
+  const panelCount = Object.keys({
+    ...(profile?.panel_mappings ?? {}),
+    ...(panelMappingsOverride ?? {}),
+  }).length;
+  const observationCount = Object.keys({
+    ...(profile?.code_mappings ?? {}),
+    ...(codeMappingsOverride ?? {}),
+  }).length;
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{t("panel_mappings")}</CardTitle>
-        <CardDescription>{t("panel_mappings_description")}</CardDescription>
+        <CardTitle>{t("code_mappings_card")}</CardTitle>
+        <CardDescription>{t("code_mappings_card_description")}</CardDescription>
         {hasOverrides && (
           <p className="text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-md w-fit">
             {t("panel_mappings_using_custom")}
@@ -119,107 +216,134 @@ export const PanelMappingsCard = ({
         )}
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-4">
-          {(panelMappings.length > 0 || codeMappings.length > 0) && (
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 size-4 text-gray-400" />
-              <Input
-                placeholder={t("search_code_mappings")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-9"
-              />
-            </div>
-          )}
+        <div className="flex flex-col gap-3">
+          <p className="text-sm text-gray-600">
+            {t("code_mappings_summary", {
+              panelCount,
+              observationCount,
+            })}
+          </p>
 
-          {panelMappings.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                {t("panel_mappings")}
-              </p>
-              <Table>
-                <TableHeader className="[&_tr]:border-gray-100">
-                  <TableRow>
-                    <TableHead className="text-xs">{t("loinc_code")}</TableHead>
-                    <TableHead className="text-xs">
-                      {t("device_panel_code")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {panelMappings.map((entry) => (
-                    <TableRow
-                      key={entry.loincCode}
-                      className={`border-gray-100 ${entry.isOverride ? "bg-blue-50/50" : ""}`}
-                    >
-                      <TableCell className="font-mono text-xs py-1.5">
-                        {entry.loincCode}
-                      </TableCell>
-                      <TableCell className="py-1.5">
-                        <div className="flex flex-wrap gap-1">
-                          {entry.panelCodes.map((code) => (
-                            <span
-                              key={code}
-                              className="inline-block rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-700"
-                            >
-                              {code}
-                            </span>
-                          ))}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 cursor-pointer w-fit"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={expanded}
+          >
+            <ChevronDown
+              className={`size-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+            />
+            {t("code_mappings_view_all")}
+          </button>
 
-          {codeMappings.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                {t("observation_code_mappings")}
-              </p>
-              <p className="text-xs text-gray-400">
-                {t("observation_code_mappings_description")}
-              </p>
-              <Table>
-                <TableHeader className="[&_tr]:border-gray-100">
-                  <TableRow>
-                    <TableHead className="text-xs">
-                      {t("device_parameter")}
-                    </TableHead>
-                    <TableHead className="text-xs">{t("loinc_code")}</TableHead>
-                    <TableHead className="text-xs">
-                      {t("display_name")}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {codeMappings.map((entry) => (
-                    <TableRow
-                      key={entry.param}
-                      className={`border-gray-100 ${entry.isOverride ? "bg-blue-50/50" : ""}`}
-                    >
-                      <TableCell className="font-mono text-xs py-1.5">
-                        {entry.param}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs py-1.5">
-                        {entry.code}
-                      </TableCell>
-                      <TableCell className="text-xs text-gray-500 py-1.5">
-                        {entry.display}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+          {expanded && (
+            <div className="flex flex-col gap-4">
+              {(panelMappings.length > 0 || codeMappings.length > 0) && (
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 size-4 text-gray-400" />
+                  <Input
+                    placeholder={t("search_code_mappings")}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-9"
+                  />
+                </div>
+              )}
 
-          {panelMappings.length === 0 && codeMappings.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">
-              {search ? t("no_results_found") : t("no_panel_mappings")}
-            </p>
+              {panelMappings.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    {t("panel_mappings")}
+                  </p>
+                  <Table>
+                    <TableHeader className="[&_tr]:border-gray-100">
+                      <TableRow>
+                        <TableHead className="text-xs">
+                          {t("panel_order_code")}
+                        </TableHead>
+                        <TableHead className="text-xs">
+                          {t("device_panel_code")}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {panelMappings.map((entry) => (
+                        <TableRow
+                          key={entry.orderCode}
+                          className={`border-gray-100 ${entry.isOverride ? "bg-blue-50/50" : ""}`}
+                        >
+                          <TableCell className="font-mono text-xs py-1.5">
+                            {entry.orderCode}
+                          </TableCell>
+                          <TableCell className="py-1.5">
+                            <div className="flex flex-wrap gap-1">
+                              {entry.panelCodes.map((code) => (
+                                <span
+                                  key={code}
+                                  className="inline-block rounded bg-gray-100 px-1.5 py-0.5 font-mono text-xs text-gray-700"
+                                >
+                                  {code}
+                                </span>
+                              ))}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {codeMappings.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    {t("observation_code_mappings")}
+                  </p>
+                  <p className="text-xs text-gray-400">
+                    {t("observation_code_mappings_description")}
+                  </p>
+                  <Table>
+                    <TableHeader className="[&_tr]:border-gray-100">
+                      <TableRow>
+                        <TableHead className="text-xs">
+                          {t("device_parameter")}
+                        </TableHead>
+                        <TableHead className="text-xs">
+                          {t("loinc_code")}
+                        </TableHead>
+                        <TableHead className="text-xs">
+                          {t("display_name")}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {codeMappings.map((entry) => (
+                        <TableRow
+                          key={entry.param}
+                          className={`border-gray-100 ${entry.isOverride ? "bg-blue-50/50" : ""}`}
+                        >
+                          <TableCell className="font-mono text-xs py-1.5">
+                            {entry.param}
+                          </TableCell>
+                          <TableCell className="font-mono text-xs py-1.5">
+                            {entry.code}
+                          </TableCell>
+                          <TableCell className="text-xs text-gray-500 py-1.5">
+                            {entry.display}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {panelMappings.length === 0 && codeMappings.length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-4">
+                  {search ? t("no_results_found") : t("no_code_mappings")}
+                </p>
+              )}
+            </div>
           )}
         </div>
       </CardContent>
@@ -231,55 +355,76 @@ export const PanelMappingsCard = ({
 
 interface PanelMappingsEditorProps {
   deviceType: string;
+  deviceId?: string;
   panelMappings: Record<string, string | string[]> | null;
   onChange: (mappings: Record<string, string | string[]> | null) => void;
 }
 
 export const PanelMappingsEditor = ({
   deviceType,
+  deviceId,
   panelMappings,
   onChange,
 }: PanelMappingsEditorProps) => {
   const { t } = useTranslation();
   const { data: deviceTypesData } = useLabAnalyzerDeviceTypes();
-  const [newLoincCode, setNewLoincCode] = useState("");
+  const [newOrderCode, setNewOrderCode] = useState("");
   const [newPanelCode, setNewPanelCode] = useState("");
 
   const profile = useMemo(() => {
-    return deviceTypesData?.results?.find(
-      (dt) => dt.name === deviceType || dt.id === deviceType,
-    );
+    return findDeviceProfile(deviceTypesData?.results, deviceType);
   }, [deviceTypesData, deviceType]);
+
+  const { data: linkedAdsData } = useQuery({
+    queryKey: ["device-activity-definitions", deviceId],
+    queryFn: query(labAnalyzerApi.listActivityDefinitions, {
+      pathParams: { deviceExternalId: deviceId! },
+    }),
+    enabled: !!deviceId,
+  });
+
+  const orderCodeSuggestions = useMemo(() => {
+    const fromDefaults = Object.keys(profile?.panel_mappings ?? {});
+    const fromAds = (linkedAdsData?.results ?? [])
+      .map((r) => r.activity_definition_code?.code)
+      .filter((code): code is string => !!code);
+    return [...new Set([...fromDefaults, ...fromAds])].sort();
+  }, [profile, linkedAdsData]);
+
+  const devicePanelCodeSuggestions = useMemo(
+    () => uniqueDevicePanelCodes(profile?.panel_mappings),
+    [profile],
+  );
 
   const entries = useMemo(() => {
     const base = profile?.panel_mappings ?? {};
     const overrides = panelMappings ?? {};
     const merged = { ...base, ...overrides };
-    return Object.entries(merged).map(([loincCode, panelCode]) => ({
-      loincCode,
+    return Object.entries(merged).map(([orderCode, panelCode]) => ({
+      orderCode,
       panelCodes: Array.isArray(panelCode) ? panelCode : [panelCode],
-      isOverride: loincCode in overrides,
+      isOverride: orderCode in overrides,
     }));
   }, [profile, panelMappings]);
 
   const handleAdd = () => {
-    if (!newLoincCode || !newPanelCode) return;
+    if (!newOrderCode || !newPanelCode) return;
     // Support comma-separated input for multiple codes
     const codes = newPanelCode
       .split(",")
       .map((c) => c.trim())
       .filter(Boolean);
     const value: string | string[] = codes.length === 1 ? codes[0] : codes;
-    const updated = { ...(panelMappings ?? {}), [newLoincCode]: value };
+    const updated = { ...(panelMappings ?? {}), [newOrderCode]: value };
     onChange(updated);
-    setNewLoincCode("");
+    setNewOrderCode("");
     setNewPanelCode("");
   };
 
-  const handleRemove = (loincCode: string) => {
+  const handleRemove = (orderCode: string) => {
     if (!panelMappings) return;
     const updated = { ...panelMappings };
-    delete updated[loincCode];
+    delete updated[orderCode];
     onChange(Object.keys(updated).length > 0 ? updated : null);
   };
 
@@ -292,7 +437,7 @@ export const PanelMappingsEditor = ({
         <Table>
           <TableHeader className="[&_tr]:border-gray-100">
             <TableRow>
-              <TableHead className="text-xs">{t("loinc_code")}</TableHead>
+              <TableHead className="text-xs">{t("panel_order_code")}</TableHead>
               <TableHead className="text-xs">
                 {t("device_panel_code")}
               </TableHead>
@@ -302,11 +447,11 @@ export const PanelMappingsEditor = ({
           <TableBody>
             {entries.map((entry) => (
               <TableRow
-                key={entry.loincCode}
+                key={entry.orderCode}
                 className={`border-gray-100 ${entry.isOverride ? "bg-blue-50/50" : ""}`}
               >
                 <TableCell className="font-mono text-xs py-1.5">
-                  {entry.loincCode}
+                  {entry.orderCode}
                 </TableCell>
                 <TableCell className="py-1.5">
                   <div className="flex flex-wrap gap-1">
@@ -326,7 +471,7 @@ export const PanelMappingsEditor = ({
                       type="button"
                       variant="ghost"
                       className="p-0! cursor-pointer hover:bg-transparent"
-                      onClick={() => handleRemove(entry.loincCode)}
+                      onClick={() => handleRemove(entry.orderCode)}
                     >
                       <Trash2 className="size-4 text-gray-500" />
                     </Button>
@@ -340,18 +485,20 @@ export const PanelMappingsEditor = ({
 
       <div className="flex gap-2 items-end">
         <div className="flex-1">
-          <Input
-            placeholder={t("loinc_code")}
-            value={newLoincCode}
-            onChange={(e) => setNewLoincCode(e.target.value)}
+          <SuggestInput
+            placeholder={t("panel_order_code")}
+            value={newOrderCode}
+            onChange={setNewOrderCode}
+            suggestions={orderCodeSuggestions}
             className="h-8 text-xs"
           />
         </div>
         <div className="flex-1">
-          <Input
+          <SuggestInput
             placeholder={t("device_panel_code")}
             value={newPanelCode}
-            onChange={(e) => setNewPanelCode(e.target.value)}
+            onChange={setNewPanelCode}
+            suggestions={devicePanelCodeSuggestions}
             className="h-8 text-xs"
           />
         </div>
@@ -361,7 +508,7 @@ export const PanelMappingsEditor = ({
           size="icon"
           className="size-8"
           onClick={handleAdd}
-          disabled={!newLoincCode || !newPanelCode}
+          disabled={!newOrderCode || !newPanelCode}
         >
           <Plus className="size-4" />
         </Button>
@@ -389,9 +536,7 @@ export const CodeMappingsEditor = ({
   const [newCode, setNewCode] = useState("");
 
   const profile = useMemo(() => {
-    return deviceTypesData?.results?.find(
-      (dt) => dt.name === deviceType || dt.id === deviceType,
-    );
+    return findDeviceProfile(deviceTypesData?.results, deviceType);
   }, [deviceTypesData, deviceType]);
 
   const entries = useMemo(() => {

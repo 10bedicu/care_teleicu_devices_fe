@@ -58,8 +58,10 @@ function MessageTypeIcon({ type }: { type: string }) {
   return <ArrowDownLeft className="size-4 text-purple-500" />;
 }
 
-function formatDate(dateStr: string) {
+function formatDate(dateStr: string | null | undefined) {
+  if (!dateStr) return "--";
   const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "--";
   return date.toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -173,7 +175,7 @@ export const MessagesCard = ({ deviceId }: Props) => {
         ) : (
           <div className="flex flex-col gap-2">
             {messages.map((msg) => (
-              <MessageRow key={msg.external_id} message={msg} />
+              <MessageRow key={msg.id} message={msg} />
             ))}
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-3 border-t border-gray-100">
